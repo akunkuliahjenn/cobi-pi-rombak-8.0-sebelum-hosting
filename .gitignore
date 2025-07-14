@@ -1,0 +1,11 @@
+# Folder dependensi dari Composer
+
+# File environment yang berisi data rahasia (seperti password database)
+.env
+.env.local
+
+# File log
+*.log
+
+# Folder dependensi dari Node.js
+/node_modules
