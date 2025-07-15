@@ -43,12 +43,22 @@ try {
     $stmt->execute([$username]);
     $user = $stmt->fetch();
 
-    if (!$user || !password_verify($password, $user['password'])) {
+    if (!$user) {
         // Record failed attempt
         recordLoginAttempt($client_identifier, false);
-        logActivity(null, $username, 'LOGIN_FAILED', "Failed login attempt for username: $username");
+        logActivity(null, $username, 'LOGIN_FAILED', "Failed login attempt - username not found: $username");
 
-        $_SESSION['login_error'] = 'Username atau password salah.';
+        $_SESSION['login_error'] = 'Username tidak ditemukan.';
+        header("Location: /cornerbites-sia/auth/login.php");
+        exit();
+    }
+    
+    if (!password_verify($password, $user['password'])) {
+        // Record failed attempt
+        recordLoginAttempt($client_identifier, false);
+        logActivity(null, $username, 'LOGIN_FAILED', "Failed login attempt - wrong password for username: $username");
+
+        $_SESSION['login_error'] = 'Password salah.';
         header("Location: /cornerbites-sia/auth/login.php");
         exit();
     }

@@ -19,8 +19,9 @@ if (isset($_SESSION['user_id'])) {
 }
 
 // Mengambil pesan flash dari sesi (jika ada).
-$error_message = $_SESSION['error_message'] ?? '';
+$error_message = $_SESSION['error_message'] ?? $_SESSION['login_error'] ?? '';
 unset($_SESSION['error_message']);
+unset($_SESSION['login_error']);
 
 $success_message = $_SESSION['success_message'] ?? $_SESSION['success_message_register'] ?? '';
 unset($_SESSION['success_message']);
