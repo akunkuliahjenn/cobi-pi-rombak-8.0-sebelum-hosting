@@ -353,7 +353,7 @@ try {
                 <!-- Header -->
                 <div class="mb-8">
                     <h1 class="text-3xl font-bold text-gray-900 mb-2">Dashboard HPP Calculator</h1>
-                    <p class="text-gray-600">Analisis Harga Pokok Produksi dengan metode Full Costing</p>
+                    <p class="text-gray-600">Pantau Analisis Harga Pokok Produksi Anda</p>
                 </div>
 
                 <!-- Main Stats Cards -->

@@ -300,12 +300,15 @@ function validateRecipeForm() {
     const bahanTab = document.getElementById('content-bahan');
     const kemasamTab = document.getElementById('content-kemasan');
 
+    let selectedRawMaterial = null;
+
     if (!bahanTab.classList.contains('hidden')) {
         // Bahan tab is active
         if (!bahanSelect.value) {
             alert('Silakan pilih bahan baku');
             return false;
         }
+        selectedRawMaterial = bahanSelect;
         // Set the raw_material_id for submission
         document.getElementById('raw_material_id').value = bahanSelect.value;
     } else if (!kemasamTab.classList.contains('hidden')) {
@@ -314,6 +317,7 @@ function validateRecipeForm() {
             alert('Silakan pilih kemasan');
             return false;
         }
+        selectedRawMaterial = kemasamSelect;
         // Set the raw_material_id for submission
         document.getElementById('raw_material_id').value = kemasamSelect.value;
     }
@@ -322,6 +326,16 @@ function validateRecipeForm() {
     if (!quantityUsed || quantityUsed <= 0) {
         alert('Silakan masukkan jumlah yang valid');
         return false;
+    }
+
+    // Check for unit conversion warning
+    const form = selectedRawMaterial.closest('form');
+    const unitWarning = form.querySelector('.unit-conversion-warning');
+    if (unitWarning) {
+        const confirmConversion = confirm('Anda menggunakan unit yang berbeda dari unit pembelian bahan baku. Apakah Anda yakin perhitungan sudah benar?');
+        if (!confirmConversion) {
+            return false;
+        }
     }
 
     return true;
@@ -1500,31 +1514,82 @@ document.addEventListener('DOMContentLoaded', function() {
 	// Function to update unit select based on raw material selection
 	function updateUnitFromSelection(selectElement) {
 		const selectedOption = selectElement.options[selectElement.selectedIndex];
-		const unit = selectedOption.getAttribute('data-unit');
+		const originalUnit = selectedOption.getAttribute('data-unit');
 		const unitSelect = selectElement.closest('form').querySelector('select[name="unit_measurement"]');
+		const form = selectElement.closest('form');
 
-		if (unit && unitSelect) {
-			// Set the unit to match the raw material's unit dan disable
+		// Remove any existing unit warning
+		const existingWarning = form.querySelector('.unit-conversion-warning');
+		if (existingWarning) {
+			existingWarning.remove();
+		}
+
+		if (originalUnit && unitSelect) {
+			// Set the unit to match the raw material's unit as default
 			for (let option of unitSelect.options) {
-				if (option.value === unit) {
+				if (option.value === originalUnit) {
 					option.selected = true;
 					break;
 				}
 			}
-			// Disable unit select supaya user tidak bisa mengubah
+			
+			// Enable unit select dan biarkan user memilih
 			unitSelect.disabled = false;
-			unitSelect.style.backgroundColor = '#f3f4f6';
-			unitSelect.style.cursor = 'not-allowed';
+			unitSelect.style.backgroundColor = '';
+			unitSelect.style.cursor = '';
+			
+			// Store original unit for validation
+			unitSelect.setAttribute('data-original-unit', originalUnit);
+			
+			// Add event listener untuk warning jika unit berbeda
+			unitSelect.addEventListener('change', function() {
+				showUnitConversionWarning(this, originalUnit);
+			});
+			
 		} else if (unitSelect) {
-			// Jika tidak ada unit yang dipilih, enable kembali
+			// Jika tidak ada unit yang dipilih, reset
 			unitSelect.disabled = true;
 			unitSelect.style.backgroundColor = '';
 			unitSelect.style.cursor = '';
+			unitSelect.removeAttribute('data-original-unit');
 		}
 	}
 
+	// Function to show unit conversion warning
+	function showUnitConversionWarning(unitSelect, originalUnit) {
+		const selectedUnit = unitSelect.value;
+		const form = unitSelect.closest('form');
+		
+		// Remove existing warning
+		const existingWarning = form.querySelector('.unit-conversion-warning');
+		if (existingWarning) {
+			existingWarning.remove();
+		}
+		
+		if (selectedUnit !== originalUnit) {
+			// Create warning element
+			const warningDiv = document.createElement('div');
+			warningDiv.className = 'unit-conversion-warning mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md';
+			warningDiv.innerHTML = `
+				<div class="flex items-center">
+					<svg class="w-5 h-5 text-yellow-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+					</svg>
+					<div class="text-sm">
+						<p class="font-medium text-yellow-800">Peringatan Konversi Unit</p>
+						<p class="text-yellow-700">Bahan baku ini dibeli dalam <span class="font-semibold">${originalUnit}</span>, tetapi Anda menggunakan <span class="font-semibold">${selectedUnit}</span>. Pastikan perhitungan sudah benar.</p>
+					</div>
+				</div>
+			`;
+			
+			// Insert warning after unit select
+			unitSelect.parentNode.insertBefore(warningDiv, unitSelect.nextSibling);
+		}
+	}
+	
+
     // Apply container stability classes
-    const containerGrid = document.querySelector('.grid.grid-cols-1.lg\\:grid-cols-2.gap-8.mb-8');
+    const containerGrid = document.querySelector('.grid.grid-cols-1.lg\\\\:grid-cols-2.gap-8.mb-8');
     if (containerGrid) {
         containerGrid.classList.add('container-grid');
     }
@@ -1545,35 +1610,81 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Function global untuk update unit dari selection (dipanggil dari PHP)
+// Function to update unit from selection with flexible unit handling
 function updateUnitFromSelection(selectElement) {
     const selectedOption = selectElement.options[selectElement.selectedIndex];
-    const unit = selectedOption.getAttribute('data-unit');
+    const originalUnit = selectedOption.getAttribute('data-unit');
     const unitSelect = selectElement.closest('form').querySelector('select[name="unit_measurement"]');
+    const form = selectElement.closest('form');
 
-    if (unit && unitSelect && selectedOption.value !== '') {
-        // Set the unit to match the raw material's unit dan disable
+    // Remove any existing unit warning
+    const existingWarning = form.querySelector('.unit-conversion-warning');
+    if (existingWarning) {
+        existingWarning.remove();
+    }
+
+    if (originalUnit && unitSelect && selectedOption.value !== '') {
+        // Set the unit to match the raw material's unit as default
         for (let option of unitSelect.options) {
-            if (option.value === unit) {
+            if (option.value === originalUnit) {
                 option.selected = true;
                 break;
             }
         }
-        // Disable unit select supaya user tidak bisa mengubah
-        unitSelect.disabled = false;
-        unitSelect.style.backgroundColor = '#f3f4f6';
-        unitSelect.style.cursor = 'not-allowed';
-        unitSelect.title = 'Satuan otomatis sesuai dengan bahan baku yang dipilih';
         
-        // Add readonly attribute
-        unitSelect.setAttribute('readonly', 'readonly');
+        // Enable unit select dan biarkan user memilih
+        unitSelect.disabled = false;
+        unitSelect.style.backgroundColor = '';
+        unitSelect.style.cursor = '';
+        unitSelect.title = 'Pilih satuan yang sesuai untuk resep';
+        
+        // Store original unit for validation
+        unitSelect.setAttribute('data-original-unit', originalUnit);
+        
+        // Add event listener untuk warning jika unit berbeda
+        unitSelect.addEventListener('change', function() {
+            showUnitConversionWarning(this, originalUnit);
+        });
+        
     } else if (unitSelect) {
         // Jika tidak ada unit yang dipilih, reset
         unitSelect.disabled = true;
         unitSelect.style.backgroundColor = '';
         unitSelect.style.cursor = '';
         unitSelect.title = '';
-        unitSelect.removeAttribute('readonly');
-        unitSelect.value = recipeUnitOptions[0];
+        unitSelect.removeAttribute('data-original-unit');
+        unitSelect.value = '';
     }
 }
 
+// Function to show unit conversion warning
+function showUnitConversionWarning(unitSelect, originalUnit) {
+    const selectedUnit = unitSelect.value;
+    const form = unitSelect.closest('form');
+    
+    // Remove existing warning
+    const existingWarning = form.querySelector('.unit-conversion-warning');
+    if (existingWarning) {
+        existingWarning.remove();
+    }
+    
+    if (selectedUnit !== originalUnit) {
+        // Create warning element
+        const warningDiv = document.createElement('div');
+        warningDiv.className = 'unit-conversion-warning mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md';
+        warningDiv.innerHTML = `
+            <div class="flex items-center">
+                <svg class="w-5 h-5 text-yellow-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+                <div class="text-sm">
+                    <p class="font-medium text-yellow-800">Peringatan Konversi Unit</p>
+                    <p class="text-yellow-700">Bahan baku ini dibeli dalam <span class="font-semibold">${originalUnit}</span>, tetapi Anda menggunakan <span class="font-semibold">${selectedUnit}</span>. Pastikan perhitungan sudah benar.</p>
+                </div>
+            </div>
+        `;
+        
+        // Insert warning after unit select
+        unitSelect.parentNode.insertBefore(warningDiv, unitSelect.nextSibling);
+    }
+}

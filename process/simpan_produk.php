@@ -44,6 +44,16 @@ try {
                 $_SESSION['product_message'] = ['text' => 'Gagal memperbarui produk atau tidak ada perubahan.', 'type' => 'error'];
             }
         } else {
+            // Cek apakah produk dengan nama dan satuan yang sama sudah ada untuk user ini
+            $checkStmt = $conn->prepare("SELECT id FROM products WHERE name = ? AND unit = ? AND user_id = ?");
+            $checkStmt->execute([$name, $unit, $_SESSION['user_id']]);
+            
+            if ($checkStmt->fetchColumn()) {
+                $_SESSION['product_message'] = ['text' => "Produk dengan nama '$name' dan satuan '$unit' sudah ada. Silakan gunakan kombinasi nama dan satuan yang berbeda.", 'type' => 'error'];
+                header("Location: /cornerbites-sia/pages/produk.php");
+                exit();
+            }
+
             // --- (PERUBAHAN) Tambah Produk Baru menggunakan fungsi middleware ---
             $dataToInsert = [
                 'name' => $name,
@@ -98,7 +108,19 @@ try {
 
 } catch (PDOException $e) {
     error_log("Error simpan/hapus produk: " . $e->getMessage());
-    $_SESSION['product_message'] = ['text' => 'Terjadi kesalahan sistem: ' . $e->getMessage(), 'type' => 'error'];
+    
+    // Handle specific database errors with user-friendly messages
+    if ($e->getCode() == 23000) {
+        // Integrity constraint violation (duplicate entry)
+        if (strpos($e->getMessage(), 'unique_product_per_user') !== false) {
+            $_SESSION['product_message'] = ['text' => 'Kombinasi nama produk dan satuan tersebut sudah ada. Silakan gunakan kombinasi yang berbeda.', 'type' => 'error'];
+        } else {
+            $_SESSION['product_message'] = ['text' => 'Data yang dimasukkan tidak valid atau sudah ada.', 'type' => 'error'];
+        }
+    } else {
+        $_SESSION['product_message'] = ['text' => 'Terjadi kesalahan sistem. Silakan coba lagi.', 'type' => 'error'];
+    }
+    
     header("Location: /cornerbites-sia/pages/produk.php");
     exit();
 }
