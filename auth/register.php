@@ -69,8 +69,8 @@ unset($_SESSION['error_message_register'], $_SESSION['success_message_register']
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
                 </svg>
             </div>
-            <h1 class="text-3xl font-bold text-white mb-2">Corner Bites App</h1>
-            <p class="text-white/80 text-sm">Aplikasi Kasir dan Analisis Bisnis UMKM</p>
+            <h1 class="text-3xl font-bold text-white mb-2">Aplikasi Kalkulator HPP</h1>
+            <p class="text-white/80 text-sm">Sistem Kalkulasi Harga Pokok Produksi</p>
         </div>
 
         <!-- Pesan Sukses atau Error -->
