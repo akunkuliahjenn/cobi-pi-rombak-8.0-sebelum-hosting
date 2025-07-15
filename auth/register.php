@@ -35,14 +35,7 @@ unset($_SESSION['error_message_register'], $_SESSION['success_message_register']
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .gradient-bg { background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 50%, #ff6b6b 100%); background-size: 400% 400%; animation: gradientShift 15s ease infinite; }
-        @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        .shape { position: absolute; background: rgba(255, 255, 255, 0.1); border-radius: 50%; animation: float 25s infinite linear; }
-        .shape:nth-child(1) { width: 100px; height: 100px; left: 15%; animation-delay: 0s; }
-        .shape:nth-child(2) { width: 150px; height: 150px; left: 75%; animation-delay: 7s; }
-        .shape:nth-child(3) { width: 80px; height: 80px; left: 60%; animation-delay: 14s; }
-        .shape:nth-child(4) { width: 120px; height: 120px; left: 30%; animation-delay: 21s; }
-        @keyframes float { 0% { transform: translateY(100vh) rotate(0deg); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(-100px) rotate(360deg); opacity: 0; } }
+        .gradient-bg { background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 50%, #ff6b6b 100%); }
         .fade-in { animation: fadeIn 0.8s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         .password-strength-bar { height: 4px; border-radius: 2px; transition: all 0.3s ease; }
@@ -52,16 +45,10 @@ unset($_SESSION['error_message_register'], $_SESSION['success_message_register']
         .strength-strong { background-color: #059669; width: 100%; }
     </style>
 </head>
-<body class="gradient-bg min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-    <!-- Floating Background Shapes -->
-    <div class="floating-shapes absolute inset-0 z-0">
-        <div class="shape"></div>
-        <div class="shape"></div>
-        <div class="shape"></div>
-        <div class="shape"></div>
-    </div>
+<body class="gradient-bg min-h-screen py-4 px-4 overflow-y-auto">
+    <div class="min-h-screen flex items-center justify-center">
 
-    <div class="bg-white/20 backdrop-blur-lg border border-white/30 rounded-3xl shadow-2xl w-full max-w-md p-8 relative z-10 fade-in">
+    <div class="bg-white/20 backdrop-blur-lg border border-white/30 rounded-3xl shadow-2xl w-full max-w-md p-6 sm:p-8 fade-in">
         <!-- Logo/Brand Section -->
         <div class="text-center mb-8">
             <div class="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-2xl mb-4">

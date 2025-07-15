@@ -332,7 +332,7 @@ if (isset($_SESSION['product_message'])) {
 
                 <!-- Filter Form -->
                 <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Search Input -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Pencarian</label>
@@ -350,9 +350,6 @@ if (isset($_SESSION['product_message'])) {
                                 <?php endforeach; ?>
                             </select>
                         </div>
-
-                        <!-- Grid filler untuk menjaga layout tetap rapi -->
-                        <div></div>
                     </div>
                 </div>
             </div>

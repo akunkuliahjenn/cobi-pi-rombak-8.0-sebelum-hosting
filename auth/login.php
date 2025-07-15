@@ -1,4 +1,6 @@
 <?php
+// Analyze: This code modifies the login page to remove the floating shapes animation and adjust the layout to prevent the need for zooming out on smaller screens.
+
 // auth/login.php
 // Halaman login pengguna yang telah disederhanakan dan dirapikan.
 
@@ -39,26 +41,13 @@ unset($_SESSION['success_message_register']);
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #805ad5 100%); background-size: 400% 400%; animation: gradientShift 15s ease infinite; }
-        @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        .shape { position: absolute; background: rgba(255, 255, 255, 0.1); border-radius: 50%; animation: float 20s infinite linear; }
-        .shape:nth-child(1) { width: 80px; height: 80px; left: 10%; animation-delay: 0s; }
-        .shape:nth-child(2) { width: 120px; height: 120px; left: 80%; animation-delay: 5s; }
-        .shape:nth-child(3) { width: 60px; height: 60px; left: 70%; animation-delay: 10s; }
-        .shape:nth-child(4) { width: 100px; height: 100px; left: 20%; animation-delay: 15s; }
-        @keyframes float { 0% { transform: translateY(100vh) rotate(0deg); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(-100px) rotate(360deg); opacity: 0; } }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #805ad5 100%); }
         .fade-in { animation: fadeIn 0.8s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="gradient-bg min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-    <!-- Floating Background Shapes -->
-    <div class="floating-shapes absolute inset-0 z-0">
-        <div class="shape"></div>
-        <div class="shape"></div>
-        <div class="shape"></div>
-        <div class="shape"></div>
-    </div>
+<body class="gradient-bg min-h-screen py-4 px-4 overflow-y-auto">
+    <div class="min-h-screen flex items-center justify-center"></body>
 
     <div class="bg-white/20 backdrop-blur-lg border border-white/30 rounded-3xl shadow-2xl w-full max-w-md p-8 relative z-10 fade-in">
         <!-- Logo/Brand Section -->
