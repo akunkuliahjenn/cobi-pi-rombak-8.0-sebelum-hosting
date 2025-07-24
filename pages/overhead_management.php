@@ -1,5 +1,4 @@
-
-<?php
+<?php // Adding method alokasi column to overhead table.
 // pages/overhead_management.php
 // Halaman manajemen biaya overhead dan tenaga kerja
 
@@ -137,6 +136,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'overhead') {
                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">NAMA BIAYA</th>
                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">DESKRIPSI</th>
                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">JUMLAH (RP)</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">METODE ALOKASI</th>
                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">EST. PAKAI</th>
                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">AKSI</th>
                 </tr>
@@ -154,6 +154,27 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'overhead') {
                             <td class="px-4 py-3">
                                 <div class="text-sm font-medium text-green-600">
                                     Rp <?php echo number_format($overhead['amount'], 0, ',', '.'); ?>
+                                </div>
+                            </td>
+                             <td class="px-4 py-3">
+                                <div class="text-sm text-gray-600">
+                                    <?php
+                                        $allocation_method = $overhead['allocation_method'] ?? 'per_batch';
+                                        switch ($allocation_method) {
+                                            case 'per_batch':
+                                                echo 'Per Batch Produksi';
+                                                break;
+                                            case 'per_unit':
+                                                echo 'Per Unit Produk';
+                                                break;
+                                            case 'percentage':
+                                                echo 'Persentase dari Penjualan';
+                                                break;
+                                            default:
+                                                echo 'Per Batch Produksi';
+                                                break;
+                                        }
+                                    ?>
                                 </div>
                             </td>
                             <td class="px-4 py-3">
@@ -183,7 +204,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'overhead') {
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="5" class="px-4 py-8 text-center">
+                        <td colspan="6" class="px-4 py-8 text-center">
                             <div class="flex flex-col items-center">
                                 <svg class="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
@@ -359,7 +380,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                 </div>
 
                 <?php if ($message): ?>
-                    <div class="mb-6 p-4 rounded-lg border-l-4 <?php echo ($message_type == 'success' ? 'bg-green-50 border-green-400 text-green-700' : 'bg-red-50border-red-400 text-red-700'); ?>" role="alert">
+                    <div class="mb-6 p-4 rounded-lg border-l-4 <?php echo ($message_type == 'success' ? 'bg-green-50 border-green-400 text-green-700' : 'bg-red-50 border-red-400 text-red-700'); ?>" role="alert">
                         <div class="flex">
                             <div class="flex-shrink-0">
                                 <?php if ($message_type == 'success'): ?>
@@ -433,7 +454,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                                         </li>
                                         <li>
                                             <strong>Persentase dari Penjualan:</strong>
-                                             <p class="pl-4 mt-1">Pilih ini untuk biaya yang dihitung berdasarkan persentase dari harga jual. Contoh: Komisi untuk marketplace sebesar 5% dari harga jual produk.</p>
+                                            <p class="pl-4 mt-1">Pilih ini untuk biaya yang dihitung berdasarkan persentase dari harga jual. Contoh: Komisi untuk marketplace sebesar 5% dari harga jual produk.</p>
                                         </li>
                                     </ul>
                                 </div>
@@ -480,8 +501,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                             <div class="space-y-4">
                                 <div>
                                     <label for="overhead_name" class="block text-sm font-semibold text-gray-700 mb-2">Nama Biaya Overhead</label>
-                                    <input type="text" id="overhead_name" name="name" 
-                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200" 
+                                    <input type="text" id="overhead_name" name="name"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
                                            placeholder="Contoh: Listrik, Sewa Tempat, Internet" required>
                                 </div>
 
@@ -491,8 +512,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                             <span class="text-gray-500 text-sm font-medium">Rp</span>
                                         </div>
-                                        <input type="text" id="overhead_amount" name="amount" 
-                                               class="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200" 
+                                        <input type="text" id="overhead_amount" name="amount"
+                                               class="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
                                                placeholder="500000" required>
                                     </div>
                                     <p class="text-xs text-gray-500 mt-1">Masukkan total biaya dari item ini (contoh: harga 1 tabung gas, atau total tagihan listrik 1 bulan).</p>
@@ -501,7 +522,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                                 <div>
                                     <label for="overhead_description" class="block text-sm font-semibold text-gray-700 mb-2">Deskripsi (Opsional)</label>
                                     <textarea id="overhead_description" name="description" rows="3"
-                                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200" 
+                                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
                                               placeholder="Deskripsi tambahan tentang biaya overhead ini"></textarea>
                                 </div>
 
@@ -522,14 +543,14 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                             </div>
 
                             <div class="flex items-center gap-4 mt-6">
-                                <button type="submit" id="overhead_submit_button" 
+                                <button type="submit" id="overhead_submit_button"
                                         class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200">
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                     </svg>
                                     Tambah Overhead
                                 </button>
-                                <button type="button" id="overhead_cancel_edit_button" 
+                                <button type="button" id="overhead_cancel_edit_button"
                                         class="hidden inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition duration-200">
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -585,8 +606,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                             <div class="space-y-4">
                                 <div>
                                     <label for="labor_position_name" class="block text-sm font-semibold text-gray-700 mb-2">Nama Posisi/Jabatan</label>
-                                    <input type="text" id="labor_position_name" name="position_name" 
-                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-200" 
+                                    <input type="text" id="labor_position_name" name="position_name"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-200"
                                            placeholder="Contoh: Chef, Kasir, Pelayan" required>
                                 </div>
 
@@ -596,8 +617,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                             <span class="text-gray-500 text-sm font-medium">Rp</span>
                                         </div>
-                                        <input type="text" id="labor_hourly_rate" name="hourly_rate" 
-                                               class="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-200" 
+                                        <input type="text" id="labor_hourly_rate" name="hourly_rate"
+                                               class="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-200"
                                                placeholder="15000" required>
                                     </div>
                                     <p class="text-xs text-gray-500 mt-1">Masukkan upah per jam untuk posisi ini</p>
@@ -605,14 +626,14 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                             </div>
 
                             <div class="flex items-center gap-4 mt-6">
-                                <button type="submit" id="labor_submit_button" 
+                                <button type="submit" id="labor_submit_button"
                                         class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-200">
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                     </svg>
                                     Tambah Posisi
                                 </button>
-                                <button type="button" id="labor_cancel_edit_button" 
+                                <button type="button" id="labor_cancel_edit_button"
                                         class="hidden inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition duration-200">
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -640,9 +661,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
 
                     <!-- Tab Navigation -->
                     <div class="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg" role="tablist">
-                        <button id="tab-overhead" 
-                                class="flex-1 px-4 py-3 text-sm font-medium rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 bg-white text-blue-600 shadow-sm" 
-                                role="tab" 
+                        <button id="tab-overhead"
+                                class="flex-1 px-4 py-3 text-sm font-medium rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 bg-white text-blue-600 shadow-sm"
+                                role="tab"
                                 aria-selected="true"
                                 onclick="showTab('overhead')">
                             <div class="flex flex-col items-center space-y-1">
@@ -654,7 +675,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                                     <span id="badge-overhead" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"><?php echo $total_overhead; ?></span>
                                 </div>
                                 <div class="text-xs text-blue-600">
-                                    <?php 
+                                    <?php
                                     // Calculate total overhead amount using middleware
                                     $total_overhead_amount_stmt = selectWithUserId($conn, 'overhead_costs', 'SUM(amount) as total', 'is_active = 1');
                                     $total_overhead_amount = $total_overhead_amount_stmt->fetchColumn() ?: 0;
@@ -663,9 +684,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                                 </div>
                             </div>
                         </button>
-                        <button id="tab-labor" 
-                                class="flex-1 px-4 py-3 text-sm font-medium rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 text-gray-500 hover:text-gray-700" 
-                                role="tab" 
+                        <button id="tab-labor"
+                                class="flex-1 px-4 py-3 text-sm font-medium rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 text-gray-500 hover:text-gray-700"
+                                role="tab"
                                 aria-selected="false"
                                 onclick="showTab('labor')">
                             <div class="flex flex-col items-center space-y-1">
@@ -677,7 +698,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                                     <span id="badge-labor" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600"><?php echo $total_labor; ?></span>
                                 </div>
                                 <div class="text-xs text-gray-500">
-                                    <?php 
+                                    <?php
                                     // Calculate average labor rate using middleware
                                     $avg_labor_rate_stmt = selectWithUserId($conn, 'labor_costs', 'AVG(hourly_rate) as avg_rate', 'is_active = 1');
                                     $avg_labor_rate = $avg_labor_rate_stmt->fetchColumn() ?: 0;
@@ -708,8 +729,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                                             </svg>
                                         </div>
-                                        <input type="text" id="search-overhead-input" 
-                                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                                        <input type="text" id="search-overhead-input"
+                                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                                placeholder="Cari nama biaya..."
                                                value="<?php echo htmlspecialchars($search_overhead); ?>">
                                     </div>
@@ -717,7 +738,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
 
                                 <div>
                                     <label for="limit-overhead-select" class="block text-sm font-medium text-gray-700 mb-2">Data per Halaman</label>
-                                    <select id="limit-overhead-select" 
+                                    <select id="limit-overhead-select"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                                         <?php foreach ([5, 10, 15, 20] as $option): ?>
                                             <option value="<?php echo $option; ?>" <?php echo $limit_overhead == $option ? 'selected' : ''; ?>>
@@ -764,8 +785,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                                             </svg>
                                         </div>
-                                        <input type="text" id="search-labor-input" 
-                                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                                        <input type="text" id="search-labor-input"
+                                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                                placeholder="Cari posisi/jabatan..."
                                                value="<?php echo htmlspecialchars($search_labor); ?>">
                                     </div>
@@ -773,7 +794,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
 
                                 <div>
                                     <label for="limit-labor-select" class="block text-sm font-medium text-gray-700 mb-2">Data per Halaman</label>
-                                    <select id="limit-labor-select" 
+                                    <select id="limit-labor-select"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                                         <?php foreach ([5, 10, 15, 20] as $option): ?>
                                             <option value="<?php echo $option; ?>" <?php echo $limit_labor == $option ? 'selected' : ''; ?>>
@@ -817,7 +838,7 @@ function showTab(tabName) {
         tabOverhead.classList.add('bg-white', 'text-blue-600', 'shadow-sm');
         tabOverhead.classList.remove('text-gray-500', 'hover:text-gray-700');
         tabOverhead.setAttribute('aria-selected', 'true');
-        
+
         // Update text colors in overhead tab
         const overheadTextElements = tabOverhead.querySelectorAll('.text-gray-500');
         overheadTextElements.forEach(el => {
@@ -828,7 +849,7 @@ function showTab(tabName) {
         tabLabor.classList.remove('bg-white', 'text-blue-600', 'shadow-sm');
         tabLabor.classList.add('text-gray-500', 'hover:text-gray-700');
         tabLabor.setAttribute('aria-selected', 'false');
-        
+
         // Update text colors in labor tab
         const laborTextElements = tabLabor.querySelectorAll('.text-blue-600');
         laborTextElements.forEach(el => {
@@ -842,7 +863,7 @@ function showTab(tabName) {
         tabLabor.classList.add('bg-white', 'text-blue-600', 'shadow-sm');
         tabLabor.classList.remove('text-gray-500', 'hover:text-gray-700');
         tabLabor.setAttribute('aria-selected', 'true');
-        
+
         // Update text colors in labor tab
         const laborTextElements = tabLabor.querySelectorAll('.text-gray-500');
         laborTextElements.forEach(el => {
@@ -850,10 +871,10 @@ function showTab(tabName) {
             el.classList.add('text-blue-600');
         });
 
-        tabOverhead.classList.remove('bg-white', 'text-blue-600', 'shadow-sm');
+        tabOverhead.classList.remove('bg-white', 'text-blue-600','shadow-sm');
         tabOverhead.classList.add('text-gray-500', 'hover:text-gray-700');
         tabOverhead.setAttribute('aria-selected', 'false');
-        
+
         // Update text colors in overhead tab
         const overheadTextElements = tabOverhead.querySelectorAll('.text-blue-600');
         overheadTextElements.forEach(el => {
@@ -864,28 +885,107 @@ function showTab(tabName) {
         contentLabor.classList.remove('hidden');
         contentOverhead.classList.add('hidden');
     }
+}
 
-    // Trigger AJAX refresh for the active tab
-    if (tabName === 'overhead') {
-        const searchOverhead = document.getElementById('search-overhead-input').value;
-        const overheadLimit = document.getElementById('limit-overhead-select').value;
-        loadOverheadData(1);
-    } else if (tabName === 'labor') {
-        const searchLabor = document.getElementById('search-labor-input').value;
-        const laborLimit = document.getElementById('limit-labor-select').value;
-        loadLaborData(1);
+// Initialize the page
+document.addEventListener('DOMContentLoaded', function() {
+    // Load initial data
+    loadOverheadData(1);
+    loadLaborData(1);
+
+    // Set up search handlers
+    setupSearchHandlers();
+
+    // Set up limit change handlers
+    setupLimitHandlers();
+});
+
+function setupSearchHandlers() {
+    const overheadSearch = document.getElementById('search-overhead-input');
+    const laborSearch = document.getElementById('search-labor-input');
+
+    let overheadTimeout;
+    let laborTimeout;
+
+    if (overheadSearch) {
+        overheadSearch.addEventListener('input', function() {
+            clearTimeout(overheadTimeout);
+            overheadTimeout = setTimeout(() => {
+                loadOverheadData(1);
+            }, 500);
+        });
+    }
+
+    if (laborSearch) {
+        laborSearch.addEventListener('input', function() {
+            clearTimeout(laborTimeout);
+            laborTimeout = setTimeout(() => {
+                loadLaborData(1);
+            }, 500);
+        });
     }
 }
 
-// Initialize data loading when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    // Load initial data
-    loadOverheadData(<?php echo $page_overhead; ?>);
-    loadLaborData(<?php echo $page_labor; ?>);
+function setupLimitHandlers() {
+    const overheadLimit = document.getElementById('limit-overhead-select');
+    const laborLimit = document.getElementById('limit-labor-select');
 
-    // Show overhead tab by default
-    showTab('overhead');
-});
+    if (overheadLimit) {
+        overheadLimit.addEventListener('change', function() {
+            loadOverheadData(1);
+        });
+    }
+
+    if (laborLimit) {
+        laborLimit.addEventListener('change', function() {
+            loadLaborData(1);
+        });
+    }
+}
+
+function loadOverheadData(page = 1) {
+    const search = document.getElementById('search-overhead-input')?.value || '';
+    const limit = document.getElementById('limit-overhead-select')?.value || 5;
+
+    const params = new URLSearchParams({
+        ajax: 'overhead',
+        page_overhead: page,
+        search_overhead: search,
+        limit_overhead: limit
+    });
+
+    fetch(`${window.location.pathname}?${params.toString()}`)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('overhead-container').innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error loading overhead data:', error);
+            document.getElementById('overhead-container').innerHTML = '<div class="text-center text-red-500 py-4">Error loading data</div>';
+        });
+}
+
+function loadLaborData(page = 1) {
+    const search = document.getElementById('search-labor-input')?.value || '';
+    const limit = document.getElementById('limit-labor-select')?.value || 5;
+
+    const params = new URLSearchParams({
+        ajax: 'labor',
+        page_labor: page,
+        search_labor: search,
+        limit_labor: limit
+    });
+
+    fetch(`${window.location.pathname}?${params.toString()}`)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('labor-container').innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error loading labor data:', error);
+            document.getElementById('labor-container').innerHTML = '<div class="text-center text-red-500 py-4">Error loading data</div>';
+        });
+}
 </script>
 
 <?php include_once __DIR__ . '/../includes/footer.php'; ?>

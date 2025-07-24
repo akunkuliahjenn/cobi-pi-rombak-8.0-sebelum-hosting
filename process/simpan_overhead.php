@@ -34,6 +34,21 @@ try {
                 exit();
             }
 
+            // Validasi duplikasi nama overhead dengan estimasi pemakaian yang sama
+            $whereClauseDuplicate = "name = :name AND estimated_uses = :estimated_uses AND is_active = 1";
+            $paramsDuplicate = [':name' => $name, ':estimated_uses' => $estimated_uses];
+            if ($overhead_id) {
+                $whereClauseDuplicate .= " AND id != :id";
+                $paramsDuplicate[':id'] = $overhead_id;
+            }
+            
+            $duplicateCount = countWithUserId($conn, 'overhead_costs', $whereClauseDuplicate, $paramsDuplicate);
+            if ($duplicateCount > 0) {
+                $_SESSION['overhead_message'] = ['text' => 'Overhead "' . $name . '" dengan estimasi pemakaian ' . $estimated_uses . 'x sudah ada. Gunakan estimasi pemakaian yang berbeda.', 'type' => 'error'];
+                header("Location: /cornerbites-sia/pages/overhead_management.php");
+                exit();
+            }
+
             // Validasi khusus berdasarkan metode alokasi
             if ($allocation_method === 'percentage' && $amount > 100) {
                 $_SESSION['overhead_message'] = ['text' => 'Untuk metode persentase, nilai tidak boleh lebih dari 100%.', 'type' => 'error'];
@@ -96,6 +111,21 @@ try {
             // Validasi dasar
             if (empty($position_name) || $hourly_rate <= 0) {
                 $_SESSION['overhead_message'] = ['text' => 'Nama posisi dan upah per jam harus diisi dengan benar.', 'type' => 'error'];
+                header("Location: /cornerbites-sia/pages/overhead_management.php");
+                exit();
+            }
+
+            // Validasi duplikasi nama posisi
+            $whereClauseDuplicate = "position_name = :position_name AND is_active = 1";
+            $paramsDuplicate = [':position_name' => $position_name];
+            if ($labor_id) {
+                $whereClauseDuplicate .= " AND id != :id";
+                $paramsDuplicate[':id'] = $labor_id;
+            }
+            
+            $duplicateCount = countWithUserId($conn, 'labor_costs', $whereClauseDuplicate, $paramsDuplicate);
+            if ($duplicateCount > 0) {
+                $_SESSION['overhead_message'] = ['text' => 'Posisi "' . $position_name . '" sudah ada. Gunakan nama posisi yang berbeda.', 'type' => 'error'];
                 header("Location: /cornerbites-sia/pages/overhead_management.php");
                 exit();
             }
