@@ -35,6 +35,15 @@ try {
 
         if ($bahan_baku_id) {
             // Update Bahan Baku menggunakan middleware
+            // Cek duplikasi nama dan brand untuk user yang sama (exclude current record)
+            $duplicateCount = countWithUserId($conn, 'raw_materials', 'name = :name AND brand = :brand AND id != :id', [':name' => $name, ':brand' => $brand, ':id' => $bahan_baku_id]);
+            if ($duplicateCount > 0) {
+                $itemType = ($type === 'kemasan') ? 'Kemasan' : 'Bahan baku';
+                $_SESSION['bahan_baku_message'] = ['text' => $itemType . ' dengan nama "' . $name . '" dan merek "' . $brand . '" sudah ada. Silakan gunakan kombinasi nama dan merek yang berbeda.', 'type' => 'error'];
+                header("Location: /cornerbites-sia/pages/bahan_baku.php");
+                exit();
+            }
+
             $dataToUpdate = [
                 'name' => $name,
                 'brand' => $brand,
@@ -47,17 +56,31 @@ try {
             $whereClause = 'id = :id';
             $whereParams = [':id' => $bahan_baku_id];
 
-            if (updateWithUserId($conn, 'raw_materials', $dataToUpdate, $whereClause, $whereParams)) {
-                $_SESSION['bahan_baku_message'] = ['text' => 'Bahan baku berhasil diperbarui!', 'type' => 'success'];
-            } else {
-                $_SESSION['bahan_baku_message'] = ['text' => 'Gagal memperbarui bahan baku.', 'type' => 'error'];
+            try {
+                if (updateWithUserId($conn, 'raw_materials', $dataToUpdate, $whereClause, $whereParams)) {
+                    $itemType = ($type === 'kemasan') ? 'kemasan' : 'bahan baku';
+                    $_SESSION['bahan_baku_message'] = ['text' => ucfirst($itemType) . ' berhasil diperbarui!', 'type' => 'success'];
+                } else {
+                    $_SESSION['bahan_baku_message'] = ['text' => 'Gagal memperbarui data. Silakan coba lagi.', 'type' => 'error'];
+                }
+            } catch (PDOException $e) {
+                // Handle constraint errors untuk update
+                if (strpos($e->getMessage(), 'Duplicate entry') !== false || strpos($e->getMessage(), 'UNIQUE constraint') !== false) {
+                    $itemType = ($type === 'kemasan') ? 'Kemasan' : 'Bahan baku';
+                    $_SESSION['bahan_baku_message'] = ['text' => $itemType . ' dengan kombinasi nama dan merek tersebut sudah ada. Silakan gunakan nama atau merek yang berbeda.', 'type' => 'error'];
+                } else {
+                    $_SESSION['bahan_baku_message'] = ['text' => 'Terjadi kesalahan saat memperbarui data. Silakan coba lagi atau hubungi administrator jika masalah berlanjut.', 'type' => 'error'];
+                }
+                header("Location: /cornerbites-sia/pages/bahan_baku.php");
+                exit();
             }
         } else {
             // Tambah Bahan Baku Baru
             // Cek duplikasi nama dan brand untuk user yang sama menggunakan middleware
             $duplicateCount = countWithUserId($conn, 'raw_materials', 'name = :name AND brand = :brand', [':name' => $name, ':brand' => $brand]);
             if ($duplicateCount > 0) {
-                $_SESSION['bahan_baku_message'] = ['text' => 'Anda sudah memiliki bahan baku dengan kombinasi nama dan brand yang sama. Gunakan nama atau brand yang berbeda.', 'type' => 'error'];
+                $itemType = ($type === 'kemasan') ? 'Kemasan' : 'Bahan baku';
+                $_SESSION['bahan_baku_message'] = ['text' => $itemType . ' dengan nama "' . $name . '" dan merek "' . $brand . '" sudah ada. Silakan gunakan kombinasi nama dan merek yang berbeda.', 'type' => 'error'];
                 header("Location: /cornerbites-sia/pages/bahan_baku.php");
                 exit();
             }
@@ -74,26 +97,24 @@ try {
 
             try {
                 if (insertWithUserId($conn, 'raw_materials', $dataToInsert)) {
-                    $_SESSION['bahan_baku_message'] = ['text' => 'Bahan baku baru berhasil ditambahkan!', 'type' => 'success'];
+                    $itemType = ($type === 'kemasan') ? 'kemasan' : 'bahan baku';
+                    $_SESSION['bahan_baku_message'] = ['text' => ucfirst($itemType) . ' baru berhasil ditambahkan!', 'type' => 'success'];
                 } else {
-                    $_SESSION['bahan_baku_message'] = ['text' => 'Gagal menambahkan bahan baku baru.', 'type' => 'error'];
+                    $itemType = ($type === 'kemasan') ? 'kemasan' : 'bahan baku';
+                    $_SESSION['bahan_baku_message'] = ['text' => 'Gagal menambahkan ' . $itemType . ' baru. Silakan coba lagi.', 'type' => 'error'];
                 }
             } catch (PDOException $e) {
-                // Jika masih ada constraint error, berikan pesan yang lebih jelas
-                if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
-                    $_SESSION['bahan_baku_message'] = ['text' => 'Database masih memiliki constraint lama. Silakan jalankan script perbaikan database terlebih dahulu.', 'type' => 'error'];
+                // Handle constraint errors dengan pesan yang lebih user-friendly
+                if (strpos($e->getMessage(), 'Duplicate entry') !== false || strpos($e->getMessage(), 'UNIQUE constraint') !== false) {
+                    $itemType = ($type === 'kemasan') ? 'Kemasan' : 'Bahan baku';
+                    $_SESSION['bahan_baku_message'] = ['text' => $itemType . ' dengan kombinasi nama dan merek tersebut sudah ada. Silakan gunakan nama atau merek yang berbeda.', 'type' => 'error'];
                 } else {
-                    $_SESSION['bahan_baku_message'] = ['text' => 'Terjadi kesalahan sistem: ' . $e->getMessage(), 'type' => 'error'];
+                    $_SESSION['bahan_baku_message'] = ['text' => 'Terjadi kesalahan saat menyimpan data. Silakan coba lagi atau hubungi administrator jika masalah berlanjut.', 'type' => 'error'];
                 }
                 header("Location: /cornerbites-sia/pages/bahan_baku.php");
                 exit();
             }
         }
-        // Redirect dengan pesan sukses
-        $_SESSION['bahan_baku_message'] = [
-            'text' => 'Bahan baku berhasil ditambahkan!',
-            'type' => 'success'
-        ];
 
         // Build redirect URL with preserved limit parameters
         $redirectUrl = "../pages/bahan_baku.php";

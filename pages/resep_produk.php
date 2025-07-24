@@ -942,11 +942,18 @@ try {
                                     $availableOverheads = $stmtAvailableOverhead->fetchAll(PDO::FETCH_ASSOC);
 
                                     foreach ($availableOverheads as $overhead):
+                                    $methodLabel = [
+                                        'per_batch' => 'Per Batch',
+                                        'per_unit' => 'Per Unit', 
+                                        'percentage' => 'Persentase'
+                                    ][$overhead['allocation_method']] ?? 'Per Batch';
                                 ?>
                                     <option value="<?php echo htmlspecialchars($overhead['id']); ?>" 
                                             data-method="<?php echo htmlspecialchars($overhead['allocation_method']); ?>"
-                                            data-amount="<?php echo htmlspecialchars($overhead['amount']); ?>">
-                                        <?php echo htmlspecialchars($overhead['name']); ?>
+                                            data-amount="<?php echo htmlspecialchars($overhead['amount']); ?>"
+                                            data-estimated-uses="<?php echo htmlspecialchars($overhead['estimated_uses'] ?? 1); ?>">
+                                        <?php echo htmlspecialchars($overhead['name']); ?> 
+                                        (<?php echo $methodLabel; ?>)
                                         <?php if ($overhead['description']): ?>
                                             - <?php echo htmlspecialchars($overhead['description']); ?>
                                         <?php endif; ?>

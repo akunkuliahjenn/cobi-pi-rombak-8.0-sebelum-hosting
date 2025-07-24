@@ -34,6 +34,19 @@ try {
                 exit();
             }
 
+            // Validasi khusus berdasarkan metode alokasi
+            if ($allocation_method === 'percentage' && $amount > 100) {
+                $_SESSION['overhead_message'] = ['text' => 'Untuk metode persentase, nilai tidak boleh lebih dari 100%.', 'type' => 'error'];
+                header("Location: /cornerbites-sia/pages/overhead_management.php");
+                exit();
+            }
+
+            // Validasi metode alokasi
+            $validMethods = ['per_batch', 'per_unit', 'percentage'];
+            if (!in_array($allocation_method, $validMethods)) {
+                $allocation_method = 'per_batch'; // Default fallback
+            }
+
             if ($overhead_id) {
                 // Update Overhead menggunakan middleware
                 $dataToUpdate = [
