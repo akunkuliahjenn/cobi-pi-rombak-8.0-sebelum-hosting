@@ -24,7 +24,7 @@ function scrollToForm() {
 document.addEventListener('DOMContentLoaded', function() {
     // Restore limit states on page load
     restoreLimitStates();
-    
+
     const priceInput = document.getElementById('purchase_price_per_unit');
 
     if (priceInput) {
@@ -42,20 +42,20 @@ document.addEventListener('DOMContentLoaded', function() {
             form.addEventListener('submit', function(e) {
                 // Save current limit states before form submission
                 saveLimitStates();
-                
+
                 // Update hidden fields with current limit values
                 const bahanLimit = document.getElementById('bahan_limit');
                 const kemasanLimit = document.getElementById('kemasan_limit');
                 const hiddenBahanLimit = document.getElementById('hidden_bahan_limit');
                 const hiddenKemasanLimit = document.getElementById('hidden_kemasan_limit');
-                
+
                 if (bahanLimit && hiddenBahanLimit) {
                     hiddenBahanLimit.value = bahanLimit.value;
                 }
                 if (kemasanLimit && hiddenKemasanLimit) {
                     hiddenKemasanLimit.value = kemasanLimit.value;
                 }
-                
+
                 // Convert formatted price back to number
                 const currentValue = priceInput.value.replace(/[^\d]/g, '');
                 priceInput.value = currentValue;
@@ -167,7 +167,7 @@ function restoreScrollPosition() {
 function editBahanBaku(material) {
     // Save current limit states before editing
     saveLimitStates();
-    
+
     // Scroll to form first
     const formTitle = document.getElementById('form-title');
     if (formTitle) {
@@ -243,7 +243,7 @@ function editBahanBaku(material) {
 function resetForm() {
     // Save current limit states before reset
     saveLimitStates();
-    
+
     document.getElementById('bahan_baku_id').value = '';
     document.getElementById('name').value = '';
     document.getElementById('brand').value = '';
@@ -403,7 +403,7 @@ function checkAndHidePagination(type, limit) {
     // Map type to the correct element ID
     const tabType = type === 'raw' ? 'raw' : 'kemasan';
     const totalCountElement = document.getElementById(`total-${tabType}-count`);
-    
+
     if (!totalCountElement) {
         console.log('Total count element not found for:', tabType);
         return;
@@ -411,9 +411,9 @@ function checkAndHidePagination(type, limit) {
 
     const totalCount = parseInt(totalCountElement.textContent) || 0;
     const limitInt = parseInt(limit);
-    
+
     console.log(`Checking pagination for ${tabType}: total=${totalCount}, limit=${limitInt}`);
-    
+
     // Find the correct content area
     const contentArea = document.getElementById(`content-${tabType === 'raw' ? 'bahan' : 'kemasan'}`);
     if (!contentArea) {
@@ -423,7 +423,7 @@ function checkAndHidePagination(type, limit) {
 
     // Find pagination container
     const paginationContainer = contentArea.querySelector('.flex.items-center.justify-between.border-t');
-    
+
     if (paginationContainer) {
         if (totalCount <= limitInt) {
             console.log(`Hiding pagination: ${totalCount} <= ${limitInt}`);
@@ -463,109 +463,381 @@ function updateTotalCount(elementId, count) {
     }
 }
 
-// Tab navigation functionality
-function switchTab(tabType) {
+// Global variables
+let currentActiveTab = 'bahan';
+let searchTimeout = null;
+
+// Tab switching functionality
+function switchTab(tabName) {
+    currentActiveTab = tabName;
+
     // Update tab buttons
-    const tabBahan = document.getElementById('tab-bahan');
-    const tabKemasan = document.getElementById('tab-kemasan');
-    const contentBahan = document.getElementById('content-bahan');
-    const contentKemasan = document.getElementById('content-kemasan');
-    const badgeBahan = document.getElementById('badge-bahan');
-    const badgeKemasan = document.getElementById('badge-kemasan');
+    const tabs = ['bahan', 'kemasan'];
+    tabs.forEach(tab => {
+        const tabButton = document.getElementById(`tab-${tab}`);
+        const tabContent = document.getElementById(`content-${tab}`);
+        const badgeBahan = document.getElementById('badge-bahan');
+        const badgeKemasan = document.getElementById('badge-kemasan');
 
-    if (tabType === 'bahan') {
-        // Activate bahan tab
-        tabBahan.classList.add('bg-white', 'text-blue-600', 'shadow-sm');
-        tabBahan.classList.remove('text-gray-500', 'hover:text-gray-700');
-        tabBahan.setAttribute('aria-selected', 'true');
+        if (tab === tabName) {
+            // Active tab styling
+            tabButton.classList.remove('text-gray-500', 'hover:text-gray-700');
+            tabButton.classList.add('bg-white', 'text-blue-600', 'shadow-sm');
+            tabButton.setAttribute('aria-selected', 'true');
+            tabContent.classList.remove('hidden');
 
-        // Deactivate kemasan tab
-        tabKemasan.classList.remove('bg-white', 'text-blue-600', 'shadow-sm');
-        tabKemasan.classList.add('text-gray-500', 'hover:text-gray-700');
-        tabKemasan.setAttribute('aria-selected', 'false');
+            if (tabName === 'bahan') {
+                badgeBahan.classList.remove('bg-gray-100', 'text-gray-600');
+                badgeBahan.classList.add('bg-blue-100', 'text-blue-800');
+                badgeKemasan.classList.remove('bg-green-100', 'text-green-800');
+                badgeKemasan.classList.add('bg-gray-100', 'text-gray-600');
+            } else {
+                badgeKemasan.classList.remove('bg-gray-100', 'text-gray-600');
+                badgeKemasan.classList.add('bg-green-100', 'text-green-800');
+                badgeBahan.classList.remove('bg-blue-100', 'text-blue-800');
+                badgeBahan.classList.add('bg-gray-100', 'text-gray-600');
+            }
+        } else {
+            // Inactive tab styling
+            tabButton.classList.remove('bg-white', 'text-blue-600', 'shadow-sm');
+            tabButton.classList.add('text-gray-500', 'hover:text-gray-700');
+            tabButton.setAttribute('aria-selected', 'false');
+            tabContent.classList.add('hidden');
+        }
+    });
 
-        // Show/hide content
-        contentBahan.classList.remove('hidden');
-        contentKemasan.classList.add('hidden');
-
-        // Update badge styles
-        badgeBahan.classList.remove('bg-gray-100', 'text-gray-600');
-        badgeBahan.classList.add('bg-blue-100', 'text-blue-800');
-        badgeKemasan.classList.remove('bg-green-100', 'text-green-800');
-        badgeKemasan.classList.add('bg-gray-100', 'text-gray-600');
-
-    } else if (tabType === 'kemasan') {
-        // Activate kemasan tab
-        tabKemasan.classList.add('bg-white', 'text-green-600', 'shadow-sm');
-        tabKemasan.classList.remove('text-gray-500', 'hover:text-gray-700');
-        tabKemasan.setAttribute('aria-selected', 'true');
-
-        // Deactivate bahan tab
-        tabBahan.classList.remove('bg-white', 'text-blue-600', 'shadow-sm');
-        tabBahan.classList.add('text-gray-500', 'hover:text-gray-700');
-        tabBahan.setAttribute('aria-selected', 'false');
-
-        // Show/hide content
-        contentKemasan.classList.remove('hidden');
-        contentBahan.classList.add('hidden');
-
-        // Update badge styles
-        badgeKemasan.classList.remove('bg-gray-100', 'text-gray-600');
-        badgeKemasan.classList.add('bg-green-100', 'text-green-800');
-        badgeBahan.classList.remove('bg-blue-100', 'text-blue-800');
-        badgeBahan.classList.add('bg-gray-100', 'text-gray-600');
+    // Trigger search for the active tab
+    if (tabName === 'bahan') {
+        handleSearchRaw();
+    } else if (tabName === 'kemasan') {
+        handleSearchKemasan();
     }
 }
 
-// Update badge counts for tabs
-function updateTabBadges(rawCount, kemasanCount) {
-    const badgeBahan = document.getElementById('badge-bahan');
-    const badgeKemasan = document.getElementById('badge-kemasan');
+// Search handling functions with debouncing
+function handleSearchRaw() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        const searchTerm = document.getElementById('search_raw').value;
+        const limit = document.getElementById('bahan_limit').value;
+        loadRawMaterials(searchTerm, limit);
+    }, 300);
+}
 
-    if (badgeBahan) {
-        badgeBahan.textContent = rawCount;
-    }
-    if (badgeKemasan) {
-        badgeKemasan.textContent = kemasanCount;
+function handleSearchKemasan() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        const searchTerm = document.getElementById('search_kemasan').value;
+        const limit = document.getElementById('kemasan_limit').value;
+        loadPackagingMaterials(searchTerm, limit);
+    }, 300);
+}
+
+// AJAX loading functions
+function loadRawMaterials(searchTerm = '', limit = 5) {
+    const container = document.getElementById('raw-materials-container');
+    container.innerHTML = '<div class="text-center py-8"><div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div><p class="mt-2 text-gray-600">Memuat data...</p></div>';
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', `bahan_baku.php?ajax=1&ajax_type=raw&search_raw=${encodeURIComponent(searchTerm)}&bahan_limit=${limit}`, true);
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            container.innerHTML = xhr.responseText;
+        }
+    };
+    xhr.send();
+}
+
+function loadPackagingMaterials(searchTerm = '', limit = 5) {
+    const container = document.getElementById('packaging-materials-container');
+    container.innerHTML = '<div class="text-center py-8"><div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div><p class="mt-2 text-gray-600">Memuat data...</p></div>';
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', `bahan_baku.php?ajax=1&ajax_type=kemasan&search_kemasan=${encodeURIComponent(searchTerm)}&kemasan_limit=${limit}`, true);
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            container.innerHTML = xhr.responseText;
+        }
+    };
+    xhr.send();
+}
+
+// Helper functions for pagination updates (called from AJAX responses)
+
+// Form handling functions
+function cancelEdit() {
+    // Reset form
+    document.querySelector('form').reset();
+    document.getElementById('bahan_baku_id').value = '';
+
+    // Reset form UI
+    document.getElementById('form-title').textContent = 'Tambah Bahan Baku/Kemasan Baru';
+    document.getElementById('submit_button').innerHTML = `
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        </svg>
+        Tambah Bahan
+    `;
+    document.getElementById('cancel_edit_button').classList.add('hidden');
+
+    // Reset to default type
+    updateFormLabels('bahan');
+}
+
+function updateFormLabels(type) {
+    const isKemasan = type === 'kemasan';
+    const sizeLabel = document.getElementById('purchase_size_label');
+    const sizeHelp = document.getElementById('purchase_size_help');
+    const priceLabel = document.getElementById('purchase_price_label');
+    const priceHelp = document.getElementById('purchase_price_help');
+
+    if (isKemasan) {
+        sizeLabel.textContent = 'Ukuran/Jumlah Per Kemasan';
+        sizeHelp.textContent = 'Jumlah per kemasan yang Anda beli (sesuai satuan di atas)';
+        priceLabel.textContent = 'Harga Beli Per Kemasan';
+        priceHelp.textContent = 'Harga per kemasan saat pembelian';
+    } else {
+        sizeLabel.textContent = 'Ukuran Beli Kemasan Bahan';
+        sizeHelp.textContent = 'Isi per kemasan yang Anda beli (sesuai satuan di atas)';
+        priceLabel.textContent = 'Harga Beli Per Kemasan';
+        priceHelp.textContent = 'Harga per kemasan saat pembelian';
     }
 }
+
+// Delete modal functions
+function showDeleteModal(id, name, type) {
+    // First check if material is used in recipes
+    checkRecipeUsage(id, name, type);
+}
+
+function showNormalDeleteModal(itemId, itemName, itemType) {
+    document.getElementById('deleteModal').classList.remove('hidden');
+
+    const modalTitle = document.getElementById('modal-title');
+    const deleteMessage = document.getElementById('delete-message');
+    const deleteConfirmButton = document.getElementById('deleteConfirmButton');
+
+    if (itemType === 'bahan') {
+        modalTitle.textContent = 'Hapus Bahan Baku';
+        deleteMessage.textContent = `Apakah Anda yakin ingin menghapus bahan baku "${itemName}"?`;
+    } else {
+        modalTitle.textContent = 'Hapus Kemasan';
+        deleteMessage.textContent = `Apakah Anda yakin ingin menghapus kemasan "${itemName}"?`;
+    }
+
+    deleteConfirmButton.href = '/cornerbites-sia/process/simpan_bahan_baku.php?action=delete&id=' + itemId;
+}
+
+function checkRecipeUsage(id, name, type) {
+    fetch(`../process/simpan_bahan_baku.php?action=check_recipes&id=${id}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.error) {
+                console.error('Server error:', data.error);
+                // If there's an error checking recipes, show regular delete modal
+                showNormalDeleteModal(id, name, type);
+                return;
+            }
+
+            if (data.count > 0) {
+                // Show force delete modal with recipe details
+                showForceDeleteModal(id, name, type, data);
+            } else {
+                // Show regular delete modal
+                showNormalDeleteModal(id, name, type);
+            }
+        })
+        .catch(error => {
+            console.error('Error checking recipe usage:', error);
+            // If there's an error, show regular delete modal
+            showNormalDeleteModal(id, name, type);
+        });
+}
+
+function showForceDeleteModal(itemId, itemName, itemType, data) {
+    const modal = document.getElementById('forceDeleteModal');
+    if (!modal) {
+        console.error('Force delete modal not found');
+        return;
+    }
+
+    modal.classList.remove('hidden');
+
+    // Update modal content
+    const materialTypeLabel = itemType === 'bahan' ? 'Bahan Baku' : 'Kemasan';
+    const materialName = data.material.brand && data.material.brand.trim() !== '' 
+        ? `${data.material.name} - ${data.material.brand}` 
+        : data.material.name;
+
+    document.getElementById('force-material-type').textContent = materialTypeLabel;
+    document.getElementById('force-material-name').textContent = materialName;
+    document.getElementById('recipe-count').textContent = data.count;
+    document.getElementById('warning-material-type').textContent = materialTypeLabel.toLowerCase();
+
+    // Update subtitle
+    const subtitle = document.getElementById('force-delete-subtitle');
+    subtitle.textContent = `${materialTypeLabel} ini digunakan dalam resep. Yakin ingin menghapus paksa?`;
+
+    // Clear and populate recipe details
+    const recipeDetails = document.getElementById('recipe-details');
+    recipeDetails.innerHTML = '';
+
+    if (data.recipes && data.recipes.length > 0) {
+        data.recipes.forEach(recipe => {
+            const recipeItem = document.createElement('div');
+            recipeItem.className = 'text-xs bg-yellow-100 px-2 py-1 rounded';
+            recipeItem.textContent = `• ${recipe.product_name} (${recipe.product_unit})`;
+            recipeDetails.appendChild(recipeItem);
+        });
+    }
+
+    // Set force delete URL
+    document.getElementById('forceDeleteConfirmButton').href = 
+        `/cornerbites-sia/process/simpan_bahan_baku.php?action=delete&id=${itemId}&force=1`;
+}
+
+function closeDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    modal.querySelector('.bg-white').classList.remove('scale-100');
+    modal.querySelector('.bg-white').classList.add('scale-95');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 200);
+}
+
+function closeForceDeleteModal() {
+    const modal = document.getElementById('forceDeleteModal');
+    if (modal) {
+        const modalContent = modal.querySelector('.bg-white');
+        if (modalContent) {
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
+        }
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 200);
+    }
+}
+
+// Price formatting function
+function formatRupiah(value) {
+    let number = parseInt(value.replace(/\D/g, ''));
+    if (isNaN(number)) number = 0;
+    return number.toLocaleString('id-ID');
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Set up search event listeners
+    const searchRaw = document.getElementById('search_raw');
+    const searchKemasan = document.getElementById('search_kemasan');
+    const bahanLimit = document.getElementById('bahan_limit');
+    const kemasanLimit = document.getElementById('kemasan_limit');
+
+    if (searchRaw) {
+        searchRaw.addEventListener('input', handleSearchRaw);
+    }
+
+    if (searchKemasan) {
+        searchKemasan.addEventListener('input', handleSearchKemasan);
+    }
+
+    if (bahanLimit) {
+        bahanLimit.addEventListener('change', handleSearchRaw);
+    }
+
+    if (kemasanLimit) {
+kemasanLimit.addEventListener('change', handleSearchKemasan);
+    }
+
+    // Set up price formatting
+    const priceInput = document.getElementById('purchase_price_per_unit');
+    if (priceInput) {
+        priceInput.addEventListener('input', function() {
+            this.value = formatRupiah(this.value);
+        });
+    }
+
+    // Set up type change listener
+    const typeSelect = document.getElementById('type');
+    if (typeSelect) {
+        typeSelect.addEventListener('change', function() {
+            updateFormLabels(this.value);
+        });
+    }
+
+    // Set up cancel edit button
+    const cancelButton = document.getElementById('cancel_edit_button');
+    if (cancelButton){
+        cancelButton.addEventListener('click', cancelEdit);
+    }
+
+    // Close modals when clicking outside
+    document.getElementById('deleteModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeDeleteModal();
+        }
+    });
+
+    document.getElementById('forceDeleteModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeForceDeleteModal();
+        }
+    });
+
+    // Initial form label setup
+    updateFormLabels('bahan');
+
+	// Restore limit states on page load
+    restoreLimitStates();
+});
 
 // Functions to save and restore limit states
 function saveLimitStates() {
     const bahanLimit = document.getElementById('bahan_limit');
     const kemasanLimit = document.getElementById('kemasan_limit');
-    
+
     if (bahanLimit) {
         localStorage.setItem('bahan_limit_state', bahanLimit.value);
     }
     if (kemasanLimit) {
         localStorage.setItem('kemasan_limit_state', kemasanLimit.value);
     }
-    
+
     // Also save current active tab
-    const activeTab = document.querySelector('[aria-selected="true"]');
-    if (activeTab) {
-        const tabType = activeTab.id.includes('bahan') ? 'bahan' : 'kemasan';
-        localStorage.setItem('active_tab_state', tabType);
-    }
+    localStorage.setItem('active_tab_state', currentActiveTab);
 }
 
 function restoreLimitStates() {
     const bahanLimit = document.getElementById('bahan_limit');
     const kemasanLimit = document.getElementById('kemasan_limit');
-    
+
     if (bahanLimit && localStorage.getItem('bahan_limit_state')) {
         bahanLimit.value = localStorage.getItem('bahan_limit_state');
     }
     if (kemasanLimit && localStorage.getItem('kemasan_limit_state')) {
         kemasanLimit.value = localStorage.getItem('kemasan_limit_state');
     }
-    
+
     // Restore active tab
     const activeTabState = localStorage.getItem('active_tab_state');
     if (activeTabState) {
         switchTab(activeTabState);
-    }
+    } else {
+		switchTab('bahan');
+	}
+
+	// Load data for the active tab on restore
+	if (currentActiveTab === 'bahan') {
+		handleSearchRaw();
+	} else if (currentActiveTab === 'kemasan') {
+		handleSearchKemasan();
+	}
 }
 
 function clearLimitStates() {
@@ -574,37 +846,18 @@ function clearLimitStates() {
     localStorage.removeItem('active_tab_state');
 }
 
-// Delete modal functions
-function showDeleteModal(itemId, itemName, itemType) {
-    document.getElementById('deleteModal').classList.remove('hidden');
-    
-    const modalTitle = document.getElementById('modal-title');
-    const deleteMessage = document.getElementById('delete-message');
-    const deleteConfirmButton = document.getElementById('deleteConfirmButton');
-    
-    if (itemType === 'bahan') {
-        modalTitle.textContent = 'Hapus Bahan Baku';
-        deleteMessage.textContent = `Apakah Anda yakin ingin menghapus bahan baku "${itemName}"?`;
-    } else {
-        modalTitle.textContent = 'Hapus Kemasan';
-        deleteMessage.textContent = `Apakah Anda yakin ingin menghapus kemasan "${itemName}"?`;
-    }
-    
-    deleteConfirmButton.href = '../process/simpan_bahan_baku.php?action=delete&id=' + itemId;
-}
-
-function closeDeleteModal() {
-    document.getElementById('deleteModal').classList.add('hidden');
-}
-
 // Make functions global
 window.editBahanBaku = editBahanBaku;
-window.resetForm = resetForm;
+window.resetForm = cancelEdit;
 window.updateTotalCount = updateTotalCount;
 window.switchTab = switchTab;
-window.updateTabBadges = updateTabBadges;
+window.updateTabBadges = () => {}; // Placeholder, functionality is now within switchTab
 window.saveLimitStates = saveLimitStates;
 window.restoreLimitStates = restoreLimitStates;
 window.clearLimitStates = clearLimitStates;
 window.showDeleteModal = showDeleteModal;
+window.showNormalDeleteModal = showNormalDeleteModal;
 window.closeDeleteModal = closeDeleteModal;
+window.showForceDeleteModal = showForceDeleteModal;
+window.closeForceDeleteModal = closeForceDeleteModal;
+// Removing the duplicate function `showForceDeleteModal` and updating the delete modal logic.

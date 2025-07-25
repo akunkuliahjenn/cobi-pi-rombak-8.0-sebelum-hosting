@@ -1,5 +1,73 @@
-<?php // Removing stock-related features from the backend process.
+
+<?php
 // process/simpan_bahan_baku.php
+// Script untuk memproses data bahan baku dan kemasan (Create, Update, Delete)
+
+require_once __DIR__ . '/../includes/secure_auth_check.php';
+require_once __DIR__ . '/../includes/user_middleware.php';
+require_once __DIR__ . '/../config/db.php';
+
+// Handle check_recipes AJAX request at the beginning
+if (isset($_GET['action']) && $_GET['action'] === 'check_recipes' && isset($_GET['id'])) {
+    header('Content-Type: application/json');
+    
+    try {
+        $material_id = (int)$_GET['id'];
+        
+        if (!$material_id) {
+            echo json_encode(['error' => 'ID tidak valid']);
+            exit();
+        }
+
+        // Check if material exists and belongs to user
+        $material = selectWithUserId($db, 'raw_materials', '*', 'id = :id', [':id' => $material_id]);
+        if (empty($material)) {
+            echo json_encode(['error' => 'Material tidak ditemukan']);
+            exit();
+        }
+
+        $material = $material[0];
+
+        // Count recipes using this material
+        $recipeCount = countWithUserId($db, 'product_recipes', 'raw_material_id = :raw_material_id', [':raw_material_id' => $material_id]);
+
+        if ($recipeCount > 0) {
+            // Get recipe details
+            $stmt = $db->prepare("
+                SELECT pr.id, p.name as product_name, p.unit as product_unit 
+                FROM product_recipes pr 
+                JOIN products p ON pr.product_id = p.id 
+                WHERE pr.raw_material_id = :raw_material_id AND pr.user_id = :user_id
+                ORDER BY p.name
+            ");
+            $stmt->execute([
+                ':raw_material_id' => $material_id,
+                ':user_id' => $_SESSION['user_id']
+            ]);
+            $recipeList = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            echo json_encode([
+                'count' => $recipeCount,
+                'material' => $material,
+                'recipes' => $recipeList
+            ]);
+        } else {
+            echo json_encode([
+                'count' => 0,
+                'material' => $material,
+                'recipes' => []
+            ]);
+        }
+
+    } catch (Exception $e) {
+        error_log("Error in check_recipes: " . $e->getMessage());
+        echo json_encode(['error' => 'Terjadi kesalahan saat mengecek resep']);
+    }
+    
+    exit();
+}
+
+// Removing stock-related features from the backend process.
 // File ini menangani logika penyimpanan/pembaruan/penghapusan bahan baku.
 
 ini_set('display_errors', 1);
@@ -8,7 +76,6 @@ error_reporting(E_ALL);
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 require_once __DIR__ . '/../includes/auth_check.php'; // Pastikan user sudah login
-require_once __DIR__ . '/../includes/user_middleware.php'; // Sertakan middleware untuk isolasi data
 require_once __DIR__ . '/../config/db.php'; // Sertakan file koneksi database
 
 try {
@@ -188,44 +255,57 @@ try {
             try {
                 $conn->beginTransaction();
 
-                // Hapus dari product_recipes terlebih dahulu
-                $whereClauseRecipe = 'raw_material_id = :raw_material_id';
-                $whereParamsRecipe = [':raw_material_id' => $bahan_baku_id];
-                deleteWithUserId($conn, 'product_recipes', $whereClauseRecipe, $whereParamsRecipe);
+                // 1. Hapus dari product_recipes terlebih dahulu dengan user isolation
+                $stmt = $conn->prepare("DELETE FROM product_recipes WHERE raw_material_id = ? AND user_id = ?");
+                $stmt->execute([$bahan_baku_id, $_SESSION['user_id']]);
+                $deletedRecipes = $stmt->rowCount();
 
-                // Kemudian hapus bahan baku/kemasan
-                $whereClause = 'id = :id';
-                $whereParams = [':id' => $bahan_baku_id];
-                if (deleteWithUserId($conn, 'raw_materials', $whereClause, $whereParams)) {
+                // 2. Kemudian hapus bahan baku/kemasan dengan user isolation
+                $stmt = $conn->prepare("DELETE FROM raw_materials WHERE id = ? AND user_id = ?");
+                $stmt->execute([$bahan_baku_id, $_SESSION['user_id']]);
+                $deletedMaterial = $stmt->rowCount();
+
+                if ($deletedMaterial > 0) {
                     $conn->commit();
-                    $_SESSION['bahan_baku_message'] = ['text' => 'Bahan baku/kemasan dan semua resep terkait berhasil dihapus!', 'type' => 'success'];
+                    $message = $deletedRecipes > 0 
+                        ? "Bahan baku/kemasan dan $deletedRecipes resep terkait berhasil dihapus!" 
+                        : 'Bahan baku/kemasan berhasil dihapus!';
+                    $_SESSION['bahan_baku_message'] = ['text' => $message, 'type' => 'success'];
                 } else {
                     $conn->rollBack();
-                    $_SESSION['bahan_baku_message'] = ['text' => 'Gagal menghapus bahan baku/kemasan.', 'type' => 'error'];
+                    $_SESSION['bahan_baku_message'] = ['text' => 'Gagal menghapus bahan baku/kemasan. Item mungkin tidak ditemukan.', 'type' => 'error'];
                 }
             } catch (Exception $e) {
                 $conn->rollBack();
+                error_log("Error in force delete: " . $e->getMessage());
                 $_SESSION['bahan_baku_message'] = ['text' => 'Terjadi kesalahan saat menghapus: ' . $e->getMessage(), 'type' => 'error'];
             }
-            header("Location: /cornerbites-sia/pages/bahan_baku.php");
-            exit();
         } else {
-            // Cek apakah bahan baku terkait dengan resep (milik user ini)
+            // Regular delete - cek dulu apakah ada resep yang menggunakan
             $recipeCount = countWithUserId($conn, 'product_recipes', 'raw_material_id = :raw_material_id', [':raw_material_id' => $bahan_baku_id]);
             if ($recipeCount > 0) {
-                $_SESSION['bahan_baku_message'] = ['text' => 'Tidak bisa menghapus bahan baku/kemasan karena sudah digunakan dalam resep. Hapus resep terkait terlebih dahulu.', 'type' => 'error'];
+                $_SESSION['bahan_baku_message'] = ['text' => 'Tidak bisa menghapus bahan baku/kemasan karena sudah digunakan dalam resep. Hapus resep terkait terlebih dahulu atau gunakan opsi hapus paksa.', 'type' => 'error'];
                 header("Location: /cornerbites-sia/pages/bahan_baku.php");
                 exit();
             }
-        }
 
-        $whereClause = 'id = :id';
-        $whereParams = [':id' => $bahan_baku_id];
-        if (deleteWithUserId($conn, 'raw_materials', $whereClause, $whereParams)) {
-            $_SESSION['bahan_baku_message'] = ['text' => 'Bahan baku/kemasan berhasil dihapus!', 'type' => 'success'];
-        } else {
-            $_SESSION['bahan_baku_message'] = ['text' => 'Gagal menghapus bahan baku/kemasan.', 'type' => 'error'];
+            // Regular delete - tanpa force
+            try {
+                $stmt = $conn->prepare("DELETE FROM raw_materials WHERE id = ? AND user_id = ?");
+                $stmt->execute([$bahan_baku_id, $_SESSION['user_id']]);
+                $deletedRows = $stmt->rowCount();
+
+                if ($deletedRows > 0) {
+                    $_SESSION['bahan_baku_message'] = ['text' => 'Bahan baku/kemasan berhasil dihapus!', 'type' => 'success'];
+                } else {
+                    $_SESSION['bahan_baku_message'] = ['text' => 'Gagal menghapus bahan baku/kemasan. Item mungkin tidak ditemukan.', 'type' => 'error'];
+                }
+            } catch (Exception $e) {
+                error_log("Error in regular delete: " . $e->getMessage());
+                $_SESSION['bahan_baku_message'] = ['text' => 'Terjadi kesalahan saat menghapus bahan baku/kemasan.', 'type' => 'error'];
+            }
         }
+        
         header("Location: /cornerbites-sia/pages/bahan_baku.php");
         exit();
 
@@ -241,3 +321,4 @@ try {
     header("Location: /cornerbites-sia/pages/bahan_baku.php");
     exit();
 }
+?>
