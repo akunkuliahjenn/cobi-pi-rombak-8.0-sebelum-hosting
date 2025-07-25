@@ -247,63 +247,28 @@ try {
             exit();
         }
 
-        // Cek apakah ini force delete
-        $force_delete = isset($_GET['force']) && $_GET['force'] == '1';
+        // Regular delete - cek dulu apakah ada resep yang menggunakan
+        $recipeCount = countWithUserId($conn, 'product_recipes', 'raw_material_id = :raw_material_id', [':raw_material_id' => $bahan_baku_id]);
+        if ($recipeCount > 0) {
+            $_SESSION['bahan_baku_message'] = ['text' => 'Tidak dapat menghapus bahan baku/kemasan karena sedang digunakan dalam resep. Hapus dari resep terlebih dahulu di halaman Manajemen Resep & HPP.', 'type' => 'error'];
+            header("Location: /cornerbites-sia/pages/bahan_baku.php");
+            exit();
+        }
 
-        if ($force_delete) {
-            // Force delete - hapus semua relasi dan bahan baku
-            try {
-                $conn->beginTransaction();
+        // Regular delete - hanya jika tidak ada resep yang menggunakan
+        try {
+            $stmt = $conn->prepare("DELETE FROM raw_materials WHERE id = ? AND user_id = ?");
+            $stmt->execute([$bahan_baku_id, $_SESSION['user_id']]);
+            $deletedRows = $stmt->rowCount();
 
-                // 1. Hapus dari product_recipes terlebih dahulu dengan user isolation
-                $stmt = $conn->prepare("DELETE FROM product_recipes WHERE raw_material_id = ? AND user_id = ?");
-                $stmt->execute([$bahan_baku_id, $_SESSION['user_id']]);
-                $deletedRecipes = $stmt->rowCount();
-
-                // 2. Kemudian hapus bahan baku/kemasan dengan user isolation
-                $stmt = $conn->prepare("DELETE FROM raw_materials WHERE id = ? AND user_id = ?");
-                $stmt->execute([$bahan_baku_id, $_SESSION['user_id']]);
-                $deletedMaterial = $stmt->rowCount();
-
-                if ($deletedMaterial > 0) {
-                    $conn->commit();
-                    $message = $deletedRecipes > 0 
-                        ? "Bahan baku/kemasan dan $deletedRecipes resep terkait berhasil dihapus!" 
-                        : 'Bahan baku/kemasan berhasil dihapus!';
-                    $_SESSION['bahan_baku_message'] = ['text' => $message, 'type' => 'success'];
-                } else {
-                    $conn->rollBack();
-                    $_SESSION['bahan_baku_message'] = ['text' => 'Gagal menghapus bahan baku/kemasan. Item mungkin tidak ditemukan.', 'type' => 'error'];
-                }
-            } catch (Exception $e) {
-                $conn->rollBack();
-                error_log("Error in force delete: " . $e->getMessage());
-                $_SESSION['bahan_baku_message'] = ['text' => 'Terjadi kesalahan saat menghapus: ' . $e->getMessage(), 'type' => 'error'];
+            if ($deletedRows > 0) {
+                $_SESSION['bahan_baku_message'] = ['text' => 'Bahan baku/kemasan berhasil dihapus!', 'type' => 'success'];
+            } else {
+                $_SESSION['bahan_baku_message'] = ['text' => 'Gagal menghapus bahan baku/kemasan. Item mungkin tidak ditemukan.', 'type' => 'error'];
             }
-        } else {
-            // Regular delete - cek dulu apakah ada resep yang menggunakan
-            $recipeCount = countWithUserId($conn, 'product_recipes', 'raw_material_id = :raw_material_id', [':raw_material_id' => $bahan_baku_id]);
-            if ($recipeCount > 0) {
-                $_SESSION['bahan_baku_message'] = ['text' => 'Tidak bisa menghapus bahan baku/kemasan karena sudah digunakan dalam resep. Hapus resep terkait terlebih dahulu atau gunakan opsi hapus paksa.', 'type' => 'error'];
-                header("Location: /cornerbites-sia/pages/bahan_baku.php");
-                exit();
-            }
-
-            // Regular delete - tanpa force
-            try {
-                $stmt = $conn->prepare("DELETE FROM raw_materials WHERE id = ? AND user_id = ?");
-                $stmt->execute([$bahan_baku_id, $_SESSION['user_id']]);
-                $deletedRows = $stmt->rowCount();
-
-                if ($deletedRows > 0) {
-                    $_SESSION['bahan_baku_message'] = ['text' => 'Bahan baku/kemasan berhasil dihapus!', 'type' => 'success'];
-                } else {
-                    $_SESSION['bahan_baku_message'] = ['text' => 'Gagal menghapus bahan baku/kemasan. Item mungkin tidak ditemukan.', 'type' => 'error'];
-                }
-            } catch (Exception $e) {
-                error_log("Error in regular delete: " . $e->getMessage());
-                $_SESSION['bahan_baku_message'] = ['text' => 'Terjadi kesalahan saat menghapus bahan baku/kemasan.', 'type' => 'error'];
-            }
+        } catch (Exception $e) {
+            error_log("Error in regular delete: " . $e->getMessage());
+            $_SESSION['bahan_baku_message'] = ['text' => 'Terjadi kesalahan saat menghapus bahan baku/kemasan.', 'type' => 'error'];
         }
         
         header("Location: /cornerbites-sia/pages/bahan_baku.php");

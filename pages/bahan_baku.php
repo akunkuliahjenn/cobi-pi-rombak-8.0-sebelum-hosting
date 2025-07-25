@@ -891,51 +891,48 @@ function buildPaginationUrl($baseUrl, $paramsToUpdate) {
     </div>
 </div>
 
-<!-- Usage Info Modal -->
-<div id="forceDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+<!-- Recipe Usage Info Modal -->
+<div id="recipeUsageInfoModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
     <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 transform scale-95 transition-all duration-200">
         <div class="p-6">
             <div class="flex items-center mb-4">
                 <div class="p-3 bg-orange-100 rounded-full mr-4">
                     <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                 </div>
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900">Tidak Dapat Menghapus</h3>
-                    <p class="text-sm text-gray-600" id="force-delete-subtitle">Item ini digunakan dalam resep dan tidak dapat dihapus.</p>
+                    <h3 class="text-lg font-semibold text-gray-900">Tidak Dapat Dihapus</h3>
+                    <p class="text-sm text-gray-600" id="recipe-usage-subtitle">Item ini sedang digunakan dalam resep dan tidak dapat dihapus.</p>
                 </div>
             </div>
             
             <div class="mb-4">
-                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <h4 class="text-sm font-medium text-yellow-800 mb-2"><span id="force-material-type">Item</span>: <span id="force-material-name"></span></h4>
-                    <div class="text-sm text-yellow-700">
-                        <p class="mb-1">Digunakan dalam <span id="recipe-count" class="font-semibold"></span> resep:</p>
-                        <div id="recipe-details" class="space-y-1 max-h-32 overflow-y-auto"></div>
+                <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                    <h4 class="text-sm font-medium text-orange-800 mb-2"><span id="info-material-type">Item</span>: <span id="info-material-name"></span></h4>
+                    <div class="text-sm text-orange-700">
+                        <p class="mb-2">Sedang digunakan dalam <span id="info-recipe-count" class="font-semibold"></span> resep:</p>
+                        <div id="info-recipe-details" class="space-y-1 max-h-32 overflow-y-auto bg-white border border-orange-200 rounded p-2"></div>
                     </div>
                 </div>
             </div>
             
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                <div class="flex items-center">
-                    <svg class="w-5 h-5 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="flex items-start">
+                    <svg class="w-5 h-5 text-blue-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                     <div class="text-sm text-blue-800">
-                        <p class="font-medium">Cara Menghapus:</p>
-                        <p>Untuk menghapus <span id="warning-material-type">item</span> ini, hapus terlebih dahulu semua resep yang menggunakannya di halaman <strong>Manajemen Resep & HPP</strong>.</p>
+                        <p class="font-medium mb-1">Cara Menghapus:</p>
+                        <p>Untuk menghapus item ini, hapus terlebih dahulu dari semua resep yang menggunakannya di halaman <a href="resep_produk.php" class="font-semibold underline hover:text-blue-900">Manajemen Resep & HPP</a>.</p>
                     </div>
                 </div>
             </div>
             
             <div class="flex space-x-3 justify-end">
-                <button type="button" onclick="closeForceDeleteModal()" class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition duration-200 font-medium">
-                    Mengerti
+                <button type="button" onclick="closeRecipeUsageInfoModal()" class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition duration-200 font-medium">
+                    Tutup
                 </button>
-                <a id="forceDeleteConfirmButton" href="#" class="hidden px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-200 font-medium">
-                    Ya, Hapus Paksa
-                </a>
             </div>
         </div>
     </div>

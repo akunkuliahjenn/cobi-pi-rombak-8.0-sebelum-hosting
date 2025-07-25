@@ -645,8 +645,8 @@ function checkRecipeUsage(id, name, type) {
             }
 
             if (data.count > 0) {
-                // Show force delete modal with recipe details
-                showForceDeleteModal(id, name, type, data);
+                // Show info modal with recipe details (no force delete option)
+                showRecipeUsageInfoModal(id, name, type, data);
             } else {
                 // Show regular delete modal
                 showNormalDeleteModal(id, name, type);
@@ -659,10 +659,10 @@ function checkRecipeUsage(id, name, type) {
         });
 }
 
-function showForceDeleteModal(itemId, itemName, itemType, data) {
-    const modal = document.getElementById('forceDeleteModal');
+function showRecipeUsageInfoModal(itemId, itemName, itemType, data) {
+    const modal = document.getElementById('recipeUsageInfoModal');
     if (!modal) {
-        console.error('Force delete modal not found');
+        console.error('Recipe usage info modal not found');
         return;
     }
 
@@ -674,31 +674,38 @@ function showForceDeleteModal(itemId, itemName, itemType, data) {
         ? `${data.material.name} - ${data.material.brand}` 
         : data.material.name;
 
-    document.getElementById('force-material-type').textContent = materialTypeLabel;
-    document.getElementById('force-material-name').textContent = materialName;
-    document.getElementById('recipe-count').textContent = data.count;
-    document.getElementById('warning-material-type').textContent = materialTypeLabel.toLowerCase();
-
+    document.getElementById('info-material-type').textContent = materialTypeLabel;
+    document.getElementById('info-material-name').textContent = materialName;
+    document.getElementById('info-recipe-count').textContent = data.count;
+    
     // Update subtitle
-    const subtitle = document.getElementById('force-delete-subtitle');
-    subtitle.textContent = `${materialTypeLabel} ini digunakan dalam resep. Yakin ingin menghapus paksa?`;
+    const subtitle = document.getElementById('recipe-usage-subtitle');
+    subtitle.textContent = `${materialTypeLabel} ini sedang digunakan dalam ${data.count} resep dan tidak dapat dihapus.`;
 
     // Clear and populate recipe details
-    const recipeDetails = document.getElementById('recipe-details');
+    const recipeDetails = document.getElementById('info-recipe-details');
     recipeDetails.innerHTML = '';
 
     if (data.recipes && data.recipes.length > 0) {
-        data.recipes.forEach(recipe => {
+        data.recipes.forEach((recipe, index) => {
             const recipeItem = document.createElement('div');
-            recipeItem.className = 'text-xs bg-yellow-100 px-2 py-1 rounded';
-            recipeItem.textContent = `• ${recipe.product_name} (${recipe.product_unit})`;
+            recipeItem.className = 'text-xs px-2 py-1 rounded bg-blue-50 border border-blue-200 flex items-center';
+            recipeItem.innerHTML = `
+                <svg class="w-3 h-3 text-blue-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <span class="font-medium text-blue-700">${recipe.product_name}</span>
+                <span class="text-blue-500 ml-1">(${recipe.product_unit})</span>
+            `;
             recipeDetails.appendChild(recipeItem);
         });
     }
 
-    // Set force delete URL
-    document.getElementById('forceDeleteConfirmButton').href = 
-        `/cornerbites-sia/process/simpan_bahan_baku.php?action=delete&id=${itemId}&force=1`;
+    // Add animation effect
+    setTimeout(() => {
+        modal.querySelector('.bg-white').classList.remove('scale-95');
+        modal.querySelector('.bg-white').classList.add('scale-100');
+    }, 10);
 }
 
 function closeDeleteModal() {
@@ -710,8 +717,8 @@ function closeDeleteModal() {
     }, 200);
 }
 
-function closeForceDeleteModal() {
-    const modal = document.getElementById('forceDeleteModal');
+function closeRecipeUsageInfoModal() {
+    const modal = document.getElementById('recipeUsageInfoModal');
     if (modal) {
         const modalContent = modal.querySelector('.bg-white');
         if (modalContent) {
@@ -784,9 +791,27 @@ kemasanLimit.addEventListener('change', handleSearchKemasan);
         }
     });
 
-    document.getElementById('forceDeleteModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeForceDeleteModal();
+    const recipeUsageInfoModal = document.getElementById('recipeUsageInfoModal');
+    if (recipeUsageInfoModal) {
+        recipeUsageInfoModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeRecipeUsageInfoModal();
+            }
+        });
+    }
+
+    // Close modals with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const deleteModal = document.getElementById('deleteModal');
+            const recipeUsageInfoModal = document.getElementById('recipeUsageInfoModal');
+            
+            if (!deleteModal.classList.contains('hidden')) {
+                closeDeleteModal();
+            }
+            if (recipeUsageInfoModal && !recipeUsageInfoModal.classList.contains('hidden')) {
+                closeRecipeUsageInfoModal();
+            }
         }
     });
 
@@ -858,6 +883,5 @@ window.clearLimitStates = clearLimitStates;
 window.showDeleteModal = showDeleteModal;
 window.showNormalDeleteModal = showNormalDeleteModal;
 window.closeDeleteModal = closeDeleteModal;
-window.showForceDeleteModal = showForceDeleteModal;
-window.closeForceDeleteModal = closeForceDeleteModal;
-// Removing the duplicate function `showForceDeleteModal` and updating the delete modal logic.
+window.showRecipeUsageInfoModal = showRecipeUsageInfoModal;
+window.closeRecipeUsageInfoModal = closeRecipeUsageInfoModal;
