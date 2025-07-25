@@ -239,7 +239,7 @@ if (isset($_SESSION['product_message'])) {
                 </div>
                 <div>
                     <h3 class="text-xl font-semibold text-gray-900" id="form_title">Tambah Produk Baru</h3>
-                    <p class="text-sm text-gray-600 mt-1" id="form_description">Isi detail produk baru Anda atau gunakan form ini untuk mengedit produk yang sudah ada.</p>
+                    <p class="text-sm text-gray-600 mt-1" id="form_description">Isi detail produk baru Anda. Anda dapat membuat produk dengan nama yang sama asalkan satuannya berbeda (contoh: "Kopi - cup" dan "Kopi - botol").</p>
                 </div>
             </div>
 

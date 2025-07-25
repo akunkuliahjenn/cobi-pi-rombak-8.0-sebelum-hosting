@@ -33,6 +33,14 @@ try {
         }
 
         if ($product_id) {
+            // Cek apakah ada produk lain dengan nama dan satuan yang sama (exclude current product)
+            $duplicateCount = countWithUserId($conn, 'products', 'name = :name AND unit = :unit AND id != :id', [':name' => $name, ':unit' => $unit, ':id' => $product_id]);
+            if ($duplicateCount > 0) {
+                $_SESSION['product_message'] = ['text' => "Produk lain dengan nama '$name' dan satuan '$unit' sudah ada. Silakan gunakan kombinasi nama dan satuan yang berbeda.", 'type' => 'error'];
+                header("Location: /cornerbites-sia/pages/produk.php");
+                exit();
+            }
+
             // --- (PERUBAHAN) Update Produk menggunakan fungsi middleware ---
             $dataToUpdate = ['name' => $name, 'unit' => $unit];
             $whereClause = 'id = :id';
@@ -44,12 +52,10 @@ try {
                 $_SESSION['product_message'] = ['text' => 'Gagal memperbarui produk atau tidak ada perubahan.', 'type' => 'error'];
             }
         } else {
-            // Cek apakah produk dengan nama yang sama sudah ada untuk user ini (tidak peduli satuan)
-            $checkStmt = $conn->prepare("SELECT id FROM products WHERE name = ? AND user_id = ?");
-            $checkStmt->execute([$name, $_SESSION['user_id']]);
-            
-            if ($checkStmt->fetchColumn()) {
-                $_SESSION['product_message'] = ['text' => "Produk dengan nama '$name' sudah ada. Silakan gunakan nama yang berbeda.", 'type' => 'error'];
+            // Cek apakah produk dengan nama dan satuan yang sama sudah ada untuk user ini
+            $duplicateCount = countWithUserId($conn, 'products', 'name = :name AND unit = :unit', [':name' => $name, ':unit' => $unit]);
+            if ($duplicateCount > 0) {
+                $_SESSION['product_message'] = ['text' => "Produk dengan nama '$name' dan satuan '$unit' sudah ada. Silakan gunakan kombinasi nama dan satuan yang berbeda.", 'type' => 'error'];
                 header("Location: /cornerbites-sia/pages/produk.php");
                 exit();
             }
@@ -63,7 +69,7 @@ try {
             ];
 
             if (insertWithUserId($conn, 'products', $dataToInsert)) {
-                $_SESSION['product_message'] = ['text' => 'Produk baru berhasil ditambahkan! Selanjutnya buat resep di halaman Manajemen Resep & HPP.', 'type' => 'success'];
+                $_SESSION['product_message'] = ['text' => 'Produk baru berhasil ditambahkan!', 'type' => 'success'];
             } else {
                 $_SESSION['product_message'] = ['text' => 'Gagal menambahkan produk baru.', 'type' => 'error'];
             }
@@ -113,7 +119,7 @@ try {
     if ($e->getCode() == 23000) {
         // Integrity constraint violation (duplicate entry)
         if (strpos($e->getMessage(), 'unique_product_per_user') !== false) {
-            $_SESSION['product_message'] = ['text' => 'Produk dengan nama dan satuan yang persis sama sudah ada. Coba gunakan satuan yang berbeda.', 'type' => 'error'];
+            $_SESSION['product_message'] = ['text' => 'Produk dengan nama dan satuan yang sama sudah ada untuk akun Anda. Gunakan nama atau satuan yang berbeda.', 'type' => 'error'];
         } else {
             $_SESSION['product_message'] = ['text' => 'Data yang dimasukkan tidak valid atau sudah ada.', 'type' => 'error'];
         }
