@@ -1,4 +1,3 @@
-
 <?php
 // pages/bahan_baku.php
 // Halaman manajemen data bahan baku (CRUD) dengan pagination dan pencarian
@@ -73,14 +72,13 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
                                                 </svg>
                                                 Edit
                                             </button>
-                                            <a href="../process/simpan_bahan_baku.php?action=delete&id=<?php echo $material['id']; ?>" 
-                                               onclick="return confirm('Apakah Anda yakin ingin menghapus <?php echo htmlspecialchars($material['name']); ?>? Resep yang menggunakan bahan ini akan ikut terhapus.')"
-                                               class="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 transition duration-200">
+                                            <button onclick="showDeleteModal('<?php echo htmlspecialchars($material['id']); ?>', '<?php echo htmlspecialchars($material['name']); ?>', 'bahan')" 
+                                                    class="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 transition duration-200">
                                                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                                 </svg>
                                                 Hapus
-                                            </a>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -173,14 +171,13 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
                                                 </svg>
                                                 Edit
                                             </button>
-                                            <a href="../process/simpan_bahan_baku.php?action=delete&id=<?php echo $material['id']; ?>" 
-                                               onclick="return confirm('Apakah Anda yakin ingin menghapus <?php echo htmlspecialchars($material['name']); ?>? Resep yang menggunakan kemasan ini akan ikut terhapus.')"
-                                               class="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 transition duration-200">
+                                            <button onclick="showDeleteModal('<?php echo htmlspecialchars($material['id']); ?>', '<?php echo htmlspecialchars($material['name']); ?>', 'kemasan')" 
+                                                    class="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 transition duration-200">
                                                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                                 </svg>
                                                 Hapus
-                                            </a>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -866,7 +863,44 @@ function buildPaginationUrl($baseUrl, $paramsToUpdate) {
     </div>
 </div>
 
-
+<!-- Delete Modal -->
+<div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] hidden">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 transform scale-95 transition-all duration-300" id="deleteModalContent">
+        <div class="p-6">
+            <div class="flex items-center mb-6">
+                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900" id="modal-title">Hapus Bahan Baku/Kemasan</h3>
+                    <p class="text-sm text-gray-600">Tindakan ini tidak dapat dibatalkan</p>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <p class="text-gray-700 leading-relaxed">
+                    Apakah Anda yakin ingin menghapus <span id="deleteItemName" class="font-semibold text-red-600">nama item</span>?
+                </p>
+                <div class="mt-3 p-3 bg-red-50 rounded-lg border border-red-200">
+                    <p class="text-sm text-red-700">
+                        <span class="font-medium">Peringatan:</span> Resep yang menggunakan bahan/kemasan ini akan ikut terhapus secara permanen!
+                    </p>
+                </div>
+            </div>
+            
+            <div class="flex space-x-3">
+                <button type="button" onclick="closeDeleteModal()" class="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition duration-200 font-medium">
+                    Batal
+                </button>
+                <button id="confirmDelete" type="button" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-200 font-medium">
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div></div>
 
 <script src="../assets/js/bahan_baku.js"></script>
 <?php include_once __DIR__ . '/../includes/footer.php'; ?>

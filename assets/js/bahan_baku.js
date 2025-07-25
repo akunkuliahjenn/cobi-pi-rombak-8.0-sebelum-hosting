@@ -604,24 +604,47 @@ function updateFormLabels(type) {
     }
 }
 
-// Delete modal functions removed - using direct delete confirmation now
-
-function showNormalDeleteModal(itemId, itemName, itemType) {
-    document.getElementById('deleteModal').classList.remove('hidden');
-
+// Modal delete functions
+function showDeleteModal(itemId, itemName, itemType) {
+    const modal = document.getElementById('deleteModal');
+    const modalContent = document.getElementById('deleteModalContent');
     const modalTitle = document.getElementById('modal-title');
-    const deleteMessage = document.getElementById('delete-message');
-    const deleteConfirmButton = document.getElementById('deleteConfirmButton');
+    const deleteItemName = document.getElementById('deleteItemName');
+    const confirmButton = document.getElementById('confirmDelete');
 
+    // Set modal content based on type
     if (itemType === 'bahan') {
         modalTitle.textContent = 'Hapus Bahan Baku';
-        deleteMessage.textContent = `Apakah Anda yakin ingin menghapus bahan baku "${itemName}"?`;
     } else {
         modalTitle.textContent = 'Hapus Kemasan';
-        deleteMessage.textContent = `Apakah Anda yakin ingin menghapus kemasan "${itemName}"?`;
     }
 
-    deleteConfirmButton.href = '/cornerbites-sia/process/simpan_bahan_baku.php?action=delete&id=' + itemId;
+    // Set item name
+    deleteItemName.textContent = itemName;
+
+    // Set delete action for confirm button
+    confirmButton.onclick = function() {
+        window.location.href = '../process/simpan_bahan_baku.php?action=delete&id=' + itemId;
+    };
+
+    // Show modal with animation
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        modalContent.classList.remove('scale-95');
+        modalContent.classList.add('scale-100');
+    }, 10);
+}
+
+function closeDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    const modalContent = document.getElementById('deleteModalContent');
+    
+    modalContent.classList.remove('scale-100');
+    modalContent.classList.add('scale-95');
+    
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 300);
 }
 
 // Recipe usage check functions removed - auto delete implemented
@@ -752,17 +775,11 @@ kemasanLimit.addEventListener('change', handleSearchKemasan);
     }
 
     // Close modals when clicking outside
-    document.getElementById('deleteModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeDeleteModal();
-        }
-    });
-
-    const recipeUsageInfoModal = document.getElementById('recipeUsageInfoModal');
-    if (recipeUsageInfoModal) {
-        recipeUsageInfoModal.addEventListener('click', function(e) {
+    const deleteModal = document.getElementById('deleteModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('click', function(e) {
             if (e.target === this) {
-                closeRecipeUsageInfoModal();
+                closeDeleteModal();
             }
         });
     }
@@ -771,13 +788,9 @@ kemasanLimit.addEventListener('change', handleSearchKemasan);
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             const deleteModal = document.getElementById('deleteModal');
-            const recipeUsageInfoModal = document.getElementById('recipeUsageInfoModal');
             
-            if (!deleteModal.classList.contains('hidden')) {
+            if (deleteModal && !deleteModal.classList.contains('hidden')) {
                 closeDeleteModal();
-            }
-            if (recipeUsageInfoModal && !recipeUsageInfoModal.classList.contains('hidden')) {
-                closeRecipeUsageInfoModal();
             }
         }
     });
@@ -847,3 +860,5 @@ window.updateTabBadges = () => {}; // Placeholder, functionality is now within s
 window.saveLimitStates = saveLimitStates;
 window.restoreLimitStates = restoreLimitStates;
 window.clearLimitStates = clearLimitStates;
+window.showDeleteModal = showDeleteModal;
+window.closeDeleteModal = closeDeleteModal;
