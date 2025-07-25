@@ -604,11 +604,7 @@ function updateFormLabels(type) {
     }
 }
 
-// Delete modal functions
-function showDeleteModal(id, name, type) {
-    // First check if material is used in recipes
-    checkRecipeUsage(id, name, type);
-}
+// Delete modal functions removed - using direct delete confirmation now
 
 function showNormalDeleteModal(itemId, itemName, itemType) {
     document.getElementById('deleteModal').classList.remove('hidden');
@@ -628,36 +624,7 @@ function showNormalDeleteModal(itemId, itemName, itemType) {
     deleteConfirmButton.href = '/cornerbites-sia/process/simpan_bahan_baku.php?action=delete&id=' + itemId;
 }
 
-function checkRecipeUsage(id, name, type) {
-    fetch(`../process/simpan_bahan_baku.php?action=check_recipes&id=${id}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.error) {
-                console.error('Server error:', data.error);
-                // If there's an error checking recipes, show regular delete modal
-                showNormalDeleteModal(id, name, type);
-                return;
-            }
-
-            if (data.count > 0) {
-                // Show info modal with recipe details (no force delete option)
-                showRecipeUsageInfoModal(id, name, type, data);
-            } else {
-                // Show regular delete modal
-                showNormalDeleteModal(id, name, type);
-            }
-        })
-        .catch(error => {
-            console.error('Error checking recipe usage:', error);
-            // If there's an error, show regular delete modal
-            showNormalDeleteModal(id, name, type);
-        });
-}
+// Recipe usage check functions removed - auto delete implemented
 
 function showRecipeUsageInfoModal(itemId, itemName, itemType, data) {
     const modal = document.getElementById('recipeUsageInfoModal');
@@ -880,8 +847,3 @@ window.updateTabBadges = () => {}; // Placeholder, functionality is now within s
 window.saveLimitStates = saveLimitStates;
 window.restoreLimitStates = restoreLimitStates;
 window.clearLimitStates = clearLimitStates;
-window.showDeleteModal = showDeleteModal;
-window.showNormalDeleteModal = showNormalDeleteModal;
-window.closeDeleteModal = closeDeleteModal;
-window.showRecipeUsageInfoModal = showRecipeUsageInfoModal;
-window.closeRecipeUsageInfoModal = closeRecipeUsageInfoModal;

@@ -247,27 +247,29 @@ try {
             exit();
         }
 
-        // Regular delete - cek dulu apakah ada resep yang menggunakan
-        $recipeCount = countWithUserId($conn, 'product_recipes', 'raw_material_id = :raw_material_id', [':raw_material_id' => $bahan_baku_id]);
-        if ($recipeCount > 0) {
-            $_SESSION['bahan_baku_message'] = ['text' => 'Tidak dapat menghapus bahan baku/kemasan karena sedang digunakan dalam resep. Hapus dari resep terlebih dahulu di halaman Manajemen Resep & HPP.', 'type' => 'error'];
-            header("Location: /cornerbites-sia/pages/bahan_baku.php");
-            exit();
-        }
-
-        // Regular delete - hanya jika tidak ada resep yang menggunakan
+        // Auto delete - hapus bahan baku dan resep terkait otomatis
         try {
+            $conn->beginTransaction();
+            
+            // Hapus semua resep yang menggunakan bahan baku ini
+            $stmt = $conn->prepare("DELETE FROM product_recipes WHERE raw_material_id = ? AND user_id = ?");
+            $stmt->execute([$bahan_baku_id, $_SESSION['user_id']]);
+            
+            // Hapus bahan baku
             $stmt = $conn->prepare("DELETE FROM raw_materials WHERE id = ? AND user_id = ?");
             $stmt->execute([$bahan_baku_id, $_SESSION['user_id']]);
             $deletedRows = $stmt->rowCount();
 
             if ($deletedRows > 0) {
+                $conn->commit();
                 $_SESSION['bahan_baku_message'] = ['text' => 'Bahan baku/kemasan berhasil dihapus!', 'type' => 'success'];
             } else {
+                $conn->rollback();
                 $_SESSION['bahan_baku_message'] = ['text' => 'Gagal menghapus bahan baku/kemasan. Item mungkin tidak ditemukan.', 'type' => 'error'];
             }
         } catch (Exception $e) {
-            error_log("Error in regular delete: " . $e->getMessage());
+            $conn->rollback();
+            error_log("Error in auto delete: " . $e->getMessage());
             $_SESSION['bahan_baku_message'] = ['text' => 'Terjadi kesalahan saat menghapus bahan baku/kemasan.', 'type' => 'error'];
         }
         

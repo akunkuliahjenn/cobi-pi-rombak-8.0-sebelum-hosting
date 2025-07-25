@@ -73,13 +73,14 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
                                                 </svg>
                                                 Edit
                                             </button>
-                                            <button onclick="showDeleteModal('<?php echo htmlspecialchars($material['id']); ?>', '<?php echo htmlspecialchars($material['name']); ?>', 'bahan')" 
-                                                    class="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 transition duration-200">
+                                            <a href="../process/simpan_bahan_baku.php?action=delete&id=<?php echo $material['id']; ?>" 
+                                               onclick="return confirm('Apakah Anda yakin ingin menghapus <?php echo htmlspecialchars($material['name']); ?>? Resep yang menggunakan bahan ini akan ikut terhapus.')"
+                                               class="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 transition duration-200">
                                                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                                 </svg>
                                                 Hapus
-                                            </button>
+                                            </a>
                                         </div>
                                     </td>
                                 </tr>
@@ -172,13 +173,14 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
                                                 </svg>
                                                 Edit
                                             </button>
-                                            <button onclick="showDeleteModal('<?php echo htmlspecialchars($material['id']); ?>', '<?php echo htmlspecialchars($material['name']); ?>', 'kemasan')" 
-                                                    class="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 transition duration-200">
+                                            <a href="../process/simpan_bahan_baku.php?action=delete&id=<?php echo $material['id']; ?>" 
+                                               onclick="return confirm('Apakah Anda yakin ingin menghapus <?php echo htmlspecialchars($material['name']); ?>? Resep yang menggunakan kemasan ini akan ikut terhapus.')"
+                                               class="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 transition duration-200">
                                                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                                 </svg>
                                                 Hapus
-                                            </button>
+                                            </a>
                                         </div>
                                     </td>
                                 </tr>
@@ -864,79 +866,7 @@ function buildPaginationUrl($baseUrl, $paramsToUpdate) {
     </div>
 </div>
 
-<!-- Delete Modal -->
-<div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 transform scale-95 transition-all duration-200">
-        <div class="p-6">
-            <div class="flex items-center mb-4">
-                <div class="p-3 bg-red-100 rounded-full mr-4">
-                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-900" id="modal-title">Hapus Item</h3>
-                    <p class="text-sm text-gray-600" id="delete-message">Apakah Anda yakin ingin menghapus item ini? Tindakan ini tidak dapat dibatalkan.</p>
-                </div>
-            </div>
-            <div class="flex space-x-3 justify-end">
-                <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition duration-200 font-medium">
-                    Batal
-                </button>
-                <a id="deleteConfirmButton" href="#" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-200 font-medium">
-                    Ya, Hapus
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Recipe Usage Info Modal -->
-<div id="recipeUsageInfoModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 transform scale-95 transition-all duration-200">
-        <div class="p-6">
-            <div class="flex items-center mb-4">
-                <div class="p-3 bg-orange-100 rounded-full mr-4">
-                    <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-900">Tidak Dapat Dihapus</h3>
-                    <p class="text-sm text-gray-600" id="recipe-usage-subtitle">Item ini sedang digunakan dalam resep dan tidak dapat dihapus.</p>
-                </div>
-            </div>
-            
-            <div class="mb-4">
-                <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                    <h4 class="text-sm font-medium text-orange-800 mb-2"><span id="info-material-type">Item</span>: <span id="info-material-name"></span></h4>
-                    <div class="text-sm text-orange-700">
-                        <p class="mb-2">Sedang digunakan dalam <span id="info-recipe-count" class="font-semibold"></span> resep:</p>
-                        <div id="info-recipe-details" class="space-y-1 max-h-32 overflow-y-auto bg-white border border-orange-200 rounded p-2"></div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                <div class="flex items-start">
-                    <svg class="w-5 h-5 text-blue-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <div class="text-sm text-blue-800">
-                        <p class="font-medium mb-1">Cara Menghapus:</p>
-                        <p>Untuk menghapus item ini, hapus terlebih dahulu dari semua resep yang menggunakannya di halaman <a href="resep_produk.php" class="font-semibold underline hover:text-blue-900">Manajemen Resep & HPP</a>.</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="flex space-x-3 justify-end">
-                <button type="button" onclick="closeRecipeUsageInfoModal()" class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition duration-200 font-medium">
-                    Tutup
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <script src="../assets/js/bahan_baku.js"></script>
 <?php include_once __DIR__ . '/../includes/footer.php'; ?>
