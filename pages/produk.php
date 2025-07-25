@@ -519,19 +519,111 @@ if (isset($_SESSION['product_message'])) {
             </div>
         </div>
     </div>
+</div>
+
+<!-- Force Delete Modal -->
+<div id="forceDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 transform scale-95 transition-all duration-200">
+        <div class="p-6">
+            <div class="flex items-center mb-4">
+                <div class="p-3 bg-orange-100 rounded-full mr-4">
+                    <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Konfirmasi Hapus Paksa</h3>
+                    <p class="text-sm text-gray-600">Produk ini digunakan dalam resep. Yakin ingin menghapus paksa?</p>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <h4 class="text-sm font-medium text-yellow-800 mb-2">Produk: <span id="force-product-name"></span></h4>
+                    <div class="text-sm text-yellow-700">
+                        <p class="mb-1">Digunakan dalam <span id="recipe-count" class="font-semibold"></span> resep:</p>
+                        <div id="recipe-details" class="space-y-1 max-h-32 overflow-y-auto"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                    <div class="text-sm text-red-800">
+                        <p class="font-medium">Peringatan!</p>
+                        <p>Menghapus paksa akan menghapus produk dan semua resep terkait secara permanen.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex space-x-3 justify-end">
+                <button type="button" onclick="closeForceDeleteModal()" class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition duration-200 font-medium">
+                    Batal
+                </button>
+                <a id="forceDeleteConfirmButton" href="#" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-200 font-medium">
+                    Ya, Hapus Paksa
+                </a>
+            </div>
+        </div>
+    </div>
 </div></div></div>
 
 <script>
 // JavaScript functions for the delete modal
 function showDeleteModal(productId, productName) {
-    document.getElementById('deleteModal').classList.remove('hidden');
-    document.getElementById('modal-title').textContent = 'Hapus Produk';
-    document.getElementById('delete-message').textContent = `Apakah Anda yakin ingin menghapus produk "${productName}"?`;
-    document.getElementById('deleteConfirmButton').href = '/cornerbites-sia/process/simpan_produk.php?action=delete&id=' + productId;
+    // First check if product has recipes
+    fetch(`/cornerbites-sia/process/simpan_produk.php?action=check_recipes&id=${productId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+            
+            if (data.count > 0) {
+                // Show force delete modal
+                showForceDeleteModal(productId, productName, data);
+            } else {
+                // Show normal delete modal
+                document.getElementById('deleteModal').classList.remove('hidden');
+                document.getElementById('modal-title').textContent = 'Hapus Produk';
+                document.getElementById('delete-message').textContent = `Apakah Anda yakin ingin menghapus produk "${productName}"?`;
+                document.getElementById('deleteConfirmButton').href = '/cornerbites-sia/process/simpan_produk.php?action=delete&id=' + productId;
+            }
+        })
+        .catch(error => {
+            console.error('Error checking recipes:', error);
+            alert('Terjadi kesalahan saat mengecek resep');
+        });
+}
+
+function showForceDeleteModal(productId, productName, data) {
+    document.getElementById('force-product-name').textContent = `${data.product.name} (${data.product.unit})`;
+    document.getElementById('recipe-count').textContent = data.count;
+    
+    const recipeDetails = document.getElementById('recipe-details');
+    recipeDetails.innerHTML = '';
+    
+    data.recipes.forEach(recipe => {
+        const div = document.createElement('div');
+        div.className = 'text-xs bg-yellow-100 px-2 py-1 rounded';
+        div.textContent = `• ${recipe.product_name} (${recipe.product_unit})`;
+        recipeDetails.appendChild(div);
+    });
+    
+    document.getElementById('forceDeleteConfirmButton').href = '/cornerbites-sia/process/simpan_produk.php?action=delete&force=1&id=' + productId;
+    document.getElementById('forceDeleteModal').classList.remove('hidden');
 }
 
 function closeDeleteModal() {
     document.getElementById('deleteModal').classList.add('hidden');
+}
+
+function closeForceDeleteModal() {
+    document.getElementById('forceDeleteModal').classList.add('hidden');
 }
 
 // Toggle custom unit input

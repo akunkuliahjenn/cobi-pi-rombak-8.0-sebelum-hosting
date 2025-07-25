@@ -69,7 +69,7 @@ try {
             ];
 
             if (insertWithUserId($conn, 'products', $dataToInsert)) {
-                $_SESSION['product_message'] = ['text' => 'Produk baru berhasil ditambahkan!', 'type' => 'success'];
+                $_SESSION['product_message'] = ['text' => 'Produk baru berhasil ditambahkan! Anda dapat menambahkan bahan baku & kemasan di halaman Manajemen Bahan Baku & Kemasan.', 'type' => 'success'];
             } else {
                 $_SESSION['product_message'] = ['text' => 'Gagal menambahkan produk baru.', 'type' => 'error'];
             }
@@ -78,6 +78,41 @@ try {
         header("Location: /cornerbites-sia/pages/produk.php");
         exit();
 
+    } elseif ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['action']) && $_GET['action'] == 'check_recipes') {
+        // Endpoint untuk mengecek resep yang menggunakan produk
+        $product_id = $_GET['id'] ?? null;
+        
+        if (empty($product_id)) {
+            echo json_encode(['error' => 'ID produk tidak ditemukan']);
+            exit();
+        }
+        
+        // Get product details
+        $stmt = selectWithUserId($conn, 'products', 'name, unit', 'id = :id', [':id' => $product_id]);
+        $product = $stmt->fetch();
+        
+        if (!$product) {
+            echo json_encode(['error' => 'Produk tidak ditemukan']);
+            exit();
+        }
+        
+        // Get recipes that use this product
+        $stmt = $conn->prepare("
+            SELECT pr.id as recipe_id, p.name as product_name, p.unit as product_unit
+            FROM product_recipes pr 
+            JOIN products p ON pr.product_id = p.id 
+            WHERE pr.product_id = :product_id AND p.user_id = :user_id
+        ");
+        $stmt->execute([':product_id' => $product_id, ':user_id' => $_SESSION['user_id']]);
+        $recipes = $stmt->fetchAll();
+        
+        echo json_encode([
+            'product' => $product,
+            'recipes' => $recipes,
+            'count' => count($recipes)
+        ]);
+        exit();
+        
     } elseif ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['action']) && $_GET['action'] == 'delete') {
         // --- (PERUBAHAN) Proses Hapus Produk menggunakan fungsi middleware ---
         $product_id = $_GET['id'] ?? null;
@@ -88,12 +123,32 @@ try {
             exit();
         }
 
-        // Cek apakah produk terkait dengan resep (milik user ini)
-        $recipeCount = countWithUserId($conn, 'product_recipes', 'product_id = :product_id', [':product_id' => $product_id]);
-        if ($recipeCount > 0) {
-            $_SESSION['product_message'] = ['text' => 'Tidak bisa menghapus produk karena sudah memiliki resep. Hapus resep terkait terlebih dahulu.', 'type' => 'error'];
+        // Cek apakah ini force delete
+        $force_delete = isset($_GET['force']) && $_GET['force'] == '1';
+        
+        if ($force_delete) {
+            // Force delete - hapus semua relasi dan produk
+            // Hapus dari product_recipes terlebih dahulu
+            deleteWithUserId($conn, 'product_recipes', 'product_id = :product_id', [':product_id' => $product_id]);
+            
+            // Kemudian hapus produk
+            $whereClause = 'id = :id';
+            $whereParams = [':id' => $product_id];
+            if (deleteWithUserId($conn, 'products', $whereClause, $whereParams)) {
+                $_SESSION['product_message'] = ['text' => 'Produk dan semua resep terkait berhasil dihapus!', 'type' => 'success'];
+            } else {
+                $_SESSION['product_message'] = ['text' => 'Gagal menghapus produk.', 'type' => 'error'];
+            }
             header("Location: /cornerbites-sia/pages/produk.php");
             exit();
+        } else {
+            // Cek apakah produk terkait dengan resep (milik user ini)
+            $recipeCount = countWithUserId($conn, 'product_recipes', 'product_id = :product_id', [':product_id' => $product_id]);
+            if ($recipeCount > 0) {
+                $_SESSION['product_message'] = ['text' => 'Tidak bisa menghapus produk karena sudah memiliki resep. Hapus resep terkait terlebih dahulu.', 'type' => 'error'];
+                header("Location: /cornerbites-sia/pages/produk.php");
+                exit();
+            }
         }
         
         $whereClause = 'id = :id';

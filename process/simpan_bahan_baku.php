@@ -135,24 +135,96 @@ try {
         header("Location: $redirectUrl");
         exit();
 
+    } elseif ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['action']) && $_GET['action'] == 'check_recipes') {
+        // Endpoint untuk mengecek resep yang menggunakan bahan baku/kemasan
+        $material_id = $_GET['id'] ?? null;
+
+        if (empty($material_id)) {
+            echo json_encode(['error' => 'ID bahan baku/kemasan tidak ditemukan']);
+            exit();
+        }
+
+        // Get material details
+        $stmt = selectWithUserId($conn, 'raw_materials', 'name, brand, unit, type', 'id = :id', [':id' => $material_id]);
+        $material = $stmt->fetch();
+
+        if (!$material) {
+            echo json_encode(['error' => 'Bahan baku/kemasan tidak ditemukan']);
+            exit();
+        }
+
+        // Get products that use this material
+        $sql = "SELECT p.name as product_name, p.unit as product_unit, pr.quantity
+                FROM product_recipes pr 
+                JOIN products p ON pr.product_id = p.id 
+                WHERE pr.raw_material_id = :material_id AND pr.user_id = :user_id";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([':material_id' => $material_id, ':user_id' => $_SESSION['user_id']]);
+        $recipes = $stmt->fetchAll();
+
+        echo json_encode([
+            'material' => $material,
+            'recipes' => $recipes,
+            'count' => count($recipes)
+        ]);
+        exit();
+
     } elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])) {
         // --- Proses Hapus Bahan Baku ---
         $bahan_baku_id = (int) $_GET['id'];
 
-        // Cek apakah bahan baku ini digunakan di resep produk mana pun menggunakan middleware
-        $recipeCount = countWithUserId($conn, 'product_recipes', 'raw_material_id = :raw_material_id', [':raw_material_id' => $bahan_baku_id]);
-        if ($recipeCount > 0) {
-            $_SESSION['bahan_baku_message'] = ['text' => 'Tidak bisa menghapus bahan baku karena sudah digunakan dalam resep produk. Hapus resep yang menggunakan bahan baku ini terlebih dahulu.', 'type' => 'error'];
+        if (empty($bahan_baku_id)) {
+            $_SESSION['bahan_baku_message'] = ['text' => 'ID bahan baku tidak ditemukan untuk dihapus.', 'type' => 'error'];
             header("Location: /cornerbites-sia/pages/bahan_baku.php");
             exit();
+        }
+
+        // Cek apakah ini force delete
+        $force_delete = isset($_GET['force']) && $_GET['force'] == '1';
+
+        if ($force_delete) {
+            // Force delete - hapus semua relasi dan bahan baku
+            try {
+                $conn->beginTransaction();
+
+                // Hapus dari product_recipes terlebih dahulu
+                $whereClauseRecipe = 'raw_material_id = :raw_material_id';
+                $whereParamsRecipe = [':raw_material_id' => $bahan_baku_id];
+                deleteWithUserId($conn, 'product_recipes', $whereClauseRecipe, $whereParamsRecipe);
+
+                // Kemudian hapus bahan baku/kemasan
+                $whereClause = 'id = :id';
+                $whereParams = [':id' => $bahan_baku_id];
+                if (deleteWithUserId($conn, 'raw_materials', $whereClause, $whereParams)) {
+                    $conn->commit();
+                    $_SESSION['bahan_baku_message'] = ['text' => 'Bahan baku/kemasan dan semua resep terkait berhasil dihapus!', 'type' => 'success'];
+                } else {
+                    $conn->rollBack();
+                    $_SESSION['bahan_baku_message'] = ['text' => 'Gagal menghapus bahan baku/kemasan.', 'type' => 'error'];
+                }
+            } catch (Exception $e) {
+                $conn->rollBack();
+                $_SESSION['bahan_baku_message'] = ['text' => 'Terjadi kesalahan saat menghapus: ' . $e->getMessage(), 'type' => 'error'];
+            }
+            header("Location: /cornerbites-sia/pages/bahan_baku.php");
+            exit();
+        } else {
+            // Cek apakah bahan baku terkait dengan resep (milik user ini)
+            $recipeCount = countWithUserId($conn, 'product_recipes', 'raw_material_id = :raw_material_id', [':raw_material_id' => $bahan_baku_id]);
+            if ($recipeCount > 0) {
+                $_SESSION['bahan_baku_message'] = ['text' => 'Tidak bisa menghapus bahan baku/kemasan karena sudah digunakan dalam resep. Hapus resep terkait terlebih dahulu.', 'type' => 'error'];
+                header("Location: /cornerbites-sia/pages/bahan_baku.php");
+                exit();
+            }
         }
 
         $whereClause = 'id = :id';
         $whereParams = [':id' => $bahan_baku_id];
         if (deleteWithUserId($conn, 'raw_materials', $whereClause, $whereParams)) {
-            $_SESSION['bahan_baku_message'] = ['text' => 'Bahan baku berhasil dihapus!', 'type' => 'success'];
+            $_SESSION['bahan_baku_message'] = ['text' => 'Bahan baku/kemasan berhasil dihapus!', 'type' => 'success'];
         } else {
-            $_SESSION['bahan_baku_message'] = ['text' => 'Gagal menghapus bahan baku.', 'type' => 'error'];
+            $_SESSION['bahan_baku_message'] = ['text' => 'Gagal menghapus bahan baku/kemasan.', 'type' => 'error'];
         }
         header("Location: /cornerbites-sia/pages/bahan_baku.php");
         exit();
