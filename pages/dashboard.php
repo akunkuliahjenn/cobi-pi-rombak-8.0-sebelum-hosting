@@ -1,4 +1,3 @@
-
 <?php
 require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../config/db.php';
@@ -149,11 +148,11 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'ranking') {
                 <div class="flex-1 flex justify-between sm:hidden">
                     <?php if ($ranking_page > 1): ?>
                         <button onclick="loadRankingData(<?php echo $ranking_page - 1; ?>)" 
-                               class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm rounded-md text-gray-700 bg-white hover:bg-gray-50">Previous</button>
+                               class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Previous</button>
                     <?php endif; ?>
                     <?php if ($ranking_page < $total_ranking_pages): ?>
                         <button onclick="loadRankingData(<?php echo $ranking_page + 1; ?>)"
-                               class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm rounded-md text-gray-700 bg-white hover:bg-gray-50">Next</button>
+                               class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Next</button>
                     <?php endif; ?>
                 </div>
                 <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
@@ -167,39 +166,33 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'ranking') {
                             <?php endif; ?>
                         </p>
                     </div>
-                    <div>
-                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                            <?php if ($ranking_page > 1): ?>
-                                <button onclick="loadRankingData(<?php echo $ranking_page - 1; ?>)" 
-                                       class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50">
-                                    <span class="sr-only">Previous</span>
-                                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                    </svg>
-                                </button>
-                            <?php endif; ?>
+                    <div class="flex items-center space-x-2">
+                        <?php if ($ranking_page > 1): ?>
+                            <button onclick="loadRankingData(<?php echo $ranking_page - 1; ?>)" 
+                                   class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
+                                Prev
+                            </button>
+                        <?php endif; ?>
 
+                        <div class="flex items-center space-x-2" aria-label="Pagination">
                             <?php 
                             $startPage = max(1, $ranking_page - 2);
                             $endPage = min($total_ranking_pages, $ranking_page + 2);
                             for ($i = $startPage; $i <= $endPage; $i++):
                             ?>
                                 <button onclick="loadRankingData(<?php echo $i; ?>)"
-                                       class="<?php echo $i == $ranking_page ? 'z-10 bg-blue-50 border-blue-500 text-blue-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'; ?> relative inline-flex items-center px-4 py-2 border text-sm">
+                                       class="<?php echo $i == $ranking_page ? 'bg-blue-500 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'; ?> px-3 py-2 text-sm rounded-md transition-colors">
                                     <?php echo $i; ?>
                                 </button>
                             <?php endfor; ?>
+                        </div>
 
-                            <?php if ($ranking_page < $total_ranking_pages): ?>
-                                <button onclick="loadRankingData(<?php echo $ranking_page + 1; ?>)"
-                                       class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50">
-                                    <span class="sr-only">Next</span>
-                                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                                    </svg>
-                                </button>
-                            <?php endif; ?>
-                        </nav>
+                        <?php if ($ranking_page < $total_ranking_pages): ?>
+                            <button onclick="loadRankingData(<?php echo $ranking_page + 1; ?>)" 
+                                   class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
+                                Next
+                            </button>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -260,7 +253,7 @@ try {
         $stmt = $conn->query("SHOW TABLES LIKE 'labor_costs'");
         if ($stmt->rowCount() > 0) {
             $totalLaborPositions = countWithUserId($conn, 'labor_costs', 'is_active = 1');
-            
+
             $stmt = selectWithUserId($conn, 'labor_costs', 'COALESCE(SUM(hourly_rate), 0) as total_cost', 'is_active = 1');
             $result = $stmt->fetch();
             $totalLaborCost = $result ? ($result['total_cost'] ?? 0) : 0;
@@ -279,7 +272,7 @@ try {
         $stmt = $conn->query("SHOW TABLES LIKE 'overhead_costs'");
         if ($stmt->rowCount() > 0) {
             $totalOverheadItems = countWithUserId($conn, 'overhead_costs', 'is_active = 1');
-            
+
             $stmt = selectWithUserId($conn, 'overhead_costs', 'COALESCE(SUM(amount), 0) as total_cost', 'is_active = 1');
             $result = $stmt->fetch();
             $totalOverheadCost = $result ? ($result['total_cost'] ?? 0) : 0;
@@ -518,7 +511,7 @@ let searchTimeout;
 
 function loadRankingData(page) {
     currentRankingPage = page;
-    
+
     const container = document.getElementById('ranking-container');
     if (!container) {
         console.error('Ranking container not found');
@@ -548,18 +541,18 @@ function loadRankingData(page) {
         })
         .then(html => {
             container.innerHTML = html;
-            
+
             // Re-initialize controls after AJAX load
             const newSearchInput = document.getElementById('search_ranking_input');
             const newLimitSelect = document.getElementById('ranking_limit_select');
-            
+
             if (newSearchInput) {
                 newSearchInput.value = currentSearchRanking;
                 newSearchInput.addEventListener('keyup', function(e) {
                     searchRanking(this.value);
                 });
             }
-            
+
             if (newLimitSelect) {
                 newLimitSelect.value = currentRankingLimit;
                 newLimitSelect.addEventListener('change', function() {
