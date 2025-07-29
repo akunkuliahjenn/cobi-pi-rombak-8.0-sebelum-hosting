@@ -108,76 +108,43 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         </table>
     </div>
 
+    <!-- Display count info -->
+    <div class="bg-white px-6 py-3 border-t border-gray-200">
+        <div class="text-sm text-gray-700">
+            Menampilkan <?php echo ($offset + 1); ?> sampai <?php echo min($offset + $limit, $totalProducts); ?> dari <?php echo $totalProducts; ?> hasil
+        </div>
+    </div>
+
     <!-- Pagination -->
     <?php if ($totalPages > 1): ?>
     <div class="bg-white px-6 py-4 border-t border-gray-200">
-        <div class="flex items-center justify-between">
-            <div class="flex-1 flex justify-between sm:hidden">
-                <?php if ($page > 1): ?>
-                    <a href="?search=<?php echo urlencode($search); ?>&limit=<?php echo $limit; ?>&page=<?php echo $page - 1; ?>" 
-                       class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Previous</a>
-                <?php endif; ?>
-                <?php if ($page < $totalPages): ?>
-                    <a href="?search=<?php echo urlencode($search); ?>&limit=<?php echo $limit; ?>&page=<?php echo $page + 1; ?>" 
-                       class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Next</a>
-                <?php endif; ?>
-            </div>
-            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div class="flex items-center space-x-2">
-                    <form id="limitForm" method="get" class="flex items-center space-x-2">
-                        <label for="limitSelect" class="text-sm text-gray-700">Per halaman:</label>
-                        <select name="limit" id="limitSelect" onchange="document.getElementById('limitForm').submit()"
-                                class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <?php foreach ($limit_options as $opt): ?>
-                                <option value="<?php echo $opt; ?>" <?php echo ($limit == $opt) ? 'selected' : ''; ?>><?php echo $opt; ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        <input type="hidden" name="search" value="<?php echo htmlspecialchars($search); ?>">
-                        <input type="hidden" name="page" value="1">
-                    </form>
-                    <div class="text-sm text-gray-700">
-                        Menampilkan <span class="font-medium"><?php echo number_format($offset + 1); ?></span> sampai 
-                        <span class="font-medium"><?php echo number_format(min($offset + $limit, $totalProducts)); ?></span> dari 
-                        <span class="font-medium"><?php echo number_format($totalProducts); ?></span> produk
-                    </div>
-                </div>
-                <div>
-                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                        <?php if ($page > 1): ?>
-                            <a href="?search=<?php echo urlencode($search); ?>&limit=<?php echo $limit; ?>&page=<?php echo $page - 1; ?>" 
-                               class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                <span class="sr-only">Previous</span>
-                                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                </svg>
-                            </a>
-                        <?php endif; ?>
+    <div class="flex items-center justify-end space-x-2">
+        <?php if ($page > 1): ?>
+            <a href="?search=<?php echo urlencode($search); ?>&limit=<?php echo $limit; ?>&page=<?php echo $page - 1; ?>" 
+               class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50 transition duration-200">
+                Prev
+            </a>
+        <?php endif; ?>
 
-                        <?php 
-                        $startPage = max(1, $page - 2);
-                        $endPage = min($totalPages, $page + 2);
-                        for ($i = $startPage; $i <= $endPage; $i++): 
-                        ?>
-                            <a href="?search=<?php echo urlencode($search); ?>&limit=<?php echo $limit; ?>&page=<?php echo $i; ?>" 
-                               class="relative inline-flex items-center px-4 py-2 border text-sm font-medium <?php echo ($i == $page) ? 'z-10 bg-blue-50 border-blue-500 text-blue-600' : 'border-gray-300 bg-white text-gray-500 hover:bg-gray-50'; ?>">
-                                <?php echo $i; ?>
-                            </a>
-                        <?php endfor; ?>
+        <?php 
+        $startPage = max(1, $page - 2);
+        $endPage = min($totalPages, $page + 2);
+        for ($i = $startPage; $i <= $endPage; $i++): 
+        ?>
+            <a href="?search=<?php echo urlencode($search); ?>&limit=<?php echo $limit; ?>&page=<?php echo $i; ?>" 
+               class="inline-flex items-center px-3 py-2 border text-sm rounded-md transition duration-200 <?php echo ($i == $page) ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'; ?>">
+            <?php echo $i; ?>
+            </a>
+        <?php endfor; ?>
 
-                        <?php if ($page < $totalPages): ?>
-                            <a href="?search=<?php echo urlencode($search); ?>&limit=<?php echo $limit; ?>&page=<?php echo $page + 1; ?>" 
-                               class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                <span class="sr-only">Next</span>
-                                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                                </svg>
-                            </a>
-                        <?php endif; ?>
-                    </nav>
-                </div>
-            </div>
-        </div>
+        <?php if ($page < $totalPages): ?>
+            <a href="?search=<?php echo urlencode($search); ?>&limit=<?php echo $limit; ?>&page=<?php echo $page + 1; ?>" 
+               class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50 transition duration-200">
+                Next
+            </a>
+        <?php endif; ?>
     </div>
+</div>
     <?php endif; ?>
     <?php
     $content = ob_get_clean();
@@ -415,74 +382,41 @@ if (isset($_SESSION['product_message'])) {
                     </table>
                 </div>
 
+                <!-- Display count info -->
+                <div class="bg-white px-6 py-3 border-t border-gray-200">
+                    <div class="text-sm text-gray-700">
+                        Menampilkan <?php echo ($offset + 1); ?> sampai <?php echo min($offset + $limit, $totalProducts); ?> dari <?php echo $totalProducts; ?> hasil
+                    </div>
+                </div>
+
                 <!-- Pagination -->
                 <?php if ($totalPages > 1): ?>
                 <div class="bg-white px-6 py-4 border-t border-gray-200">
-                    <div class="flex items-center justify-between">
-                        <div class="flex-1 flex justify-between sm:hidden">
-                            <?php if ($page > 1): ?>
-                                <a href="?search=<?php echo urlencode($search); ?>&limit=<?php echo $limit; ?>&page=<?php echo $page - 1; ?>" 
-                                   class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Previous</a>
-                            <?php endif; ?>
-                            <?php if ($page < $totalPages): ?>
-                                <a href="?search=<?php echo urlencode($search); ?>&limit=<?php echo $limit; ?>&page=<?php echo $page + 1; ?>" 
-                                   class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Next</a>
-                            <?php endif; ?>
-                        </div>
-                        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                            <div class="flex items-center space-x-2">
-                                <form id="limitForm" method="get" class="flex items-center space-x-2">
-                                    <label for="limitSelect" class="text-sm text-gray-700">Per halaman:</label>
-                                    <select name="limit" id="limitSelect" onchange="document.getElementById('limitForm').submit()"
-                                            class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                        <?php foreach ($limit_options as $opt): ?>
-                                            <option value="<?php echo $opt; ?>" <?php echo ($limit == $opt) ? 'selected' : ''; ?>><?php echo $opt; ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <input type="hidden" name="search" value="<?php echo htmlspecialchars($search); ?>">
-                                    <input type="hidden" name="page" value="1">
-                                </form>
-                                <div class="text-sm text-gray-700">
-                                    Menampilkan <span class="font-medium"><?php echo number_format($offset + 1); ?></span> sampai 
-                                    <span class="font-medium"><?php echo number_format(min($offset + $limit, $totalProducts)); ?></span> dari 
-                                    <span class="font-medium"><?php echo number_format($totalProducts); ?></span> produk
-                                </div>
-                            </div>
-                            <div>
-                                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                                    <?php if ($page > 1): ?>
-                                        <a href="?search=<?php echo urlencode($search); ?>&limit=<?php echo $limit; ?>&page=<?php echo $page - 1; ?>" 
-                                           class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                            <span class="sr-only">Previous</span>
-                                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                            </svg>
-                                        </a>
-                                    <?php endif; ?>
+                    <div class="flex items-center justify-end space-x-2">
+                        <?php if ($page > 1): ?>
+                            <a href="?search=<?php echo urlencode($search); ?>&limit=<?php echo $limit; ?>&page=<?php echo $page - 1; ?>" 
+                               class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50 transition duration-200">
+                                Prev
+                            </a>
+                        <?php endif; ?>
 
-                                    <?php 
-                                    $startPage = max(1, $page - 2);
-                                    $endPage = min($totalPages, $page + 2);
-                                    for ($i = $startPage; $i <= $endPage; $i++): 
-                                    ?>
-                                        <a href="?search=<?php echo urlencode($search); ?>&limit=<?php echo $limit; ?>&page=<?php echo $i; ?>" 
-                                           class="relative inline-flex items-center px-4 py-2 border text-sm font-medium <?php echo ($i == $page) ? 'z-10 bg-blue-50 border-blue-500 text-blue-600' : 'border-gray-300 bg-white text-gray-500 hover:bg-gray-50'; ?>">
-                                            <?php echo $i; ?>
-                                        </a>
-                                    <?php endfor; ?>
+                        <?php 
+                        $startPage = max(1, $page - 2);
+                        $endPage = min($totalPages, $page + 2);
+                        for ($i = $startPage; $i <= $endPage; $i++): 
+                        ?>
+                            <a href="?search=<?php echo urlencode($search); ?>&limit=<?php echo $limit; ?>&page=<?php echo $i; ?>" 
+                               class="inline-flex items-center px-3 py-2 border text-sm rounded-md transition duration-200 <?php echo ($i == $page) ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'; ?>">
+                            <?php echo $i; ?>
+                            </a>
+                        <?php endfor; ?>
 
-                                    <?php if ($page < $totalPages): ?>
-                                        <a href="?search=<?php echo urlencode($search); ?>&limit=<?php echo $limit; ?>&page=<?php echo $page + 1; ?>" 
-                                           class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                            <span class="sr-only">Next</span>
-                                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                                            </svg>
-                                        </a>
-                                    <?php endif; ?>
-                                </nav>
-                            </div>
-                        </div>
+                        <?php if ($page < $totalPages): ?>
+                            <a href="?search=<?php echo urlencode($search); ?>&limit=<?php echo $limit; ?>&page=<?php echo $page + 1; ?>" 
+                               class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50 transition duration-200">
+                                Next
+                            </a>
+                        <?php endif; ?>
                     </div>
                 </div>
                 <?php endif; ?>
@@ -536,7 +470,7 @@ if (isset($_SESSION['product_message'])) {
                     <p class="text-sm text-gray-600">Produk ini digunakan dalam resep. Yakin ingin menghapus paksa?</p>
                 </div>
             </div>
-            
+
             <div class="mb-4">
                 <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                     <h4 class="text-sm font-medium text-yellow-800 mb-2">Produk: <span id="force-product-name"></span></h4>
@@ -546,7 +480,7 @@ if (isset($_SESSION['product_message'])) {
                     </div>
                 </div>
             </div>
-            
+
             <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
                 <div class="flex items-center">
                     <svg class="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -558,7 +492,7 @@ if (isset($_SESSION['product_message'])) {
                     </div>
                 </div>
             </div>
-            
+
             <div class="flex space-x-3 justify-end">
                 <button type="button" onclick="closeForceDeleteModal()" class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition duration-200 font-medium">
                     Batal
@@ -582,7 +516,7 @@ function showDeleteModal(productId, productName) {
                 alert(data.error);
                 return;
             }
-            
+
             if (data.count > 0) {
                 // Show force delete modal
                 showForceDeleteModal(productId, productName, data);
@@ -603,17 +537,17 @@ function showDeleteModal(productId, productName) {
 function showForceDeleteModal(productId, productName, data) {
     document.getElementById('force-product-name').textContent = `${data.product.name} (${data.product.unit})`;
     document.getElementById('recipe-count').textContent = data.count;
-    
+
     const recipeDetails = document.getElementById('recipe-details');
     recipeDetails.innerHTML = '';
-    
+
     data.recipes.forEach(recipe => {
         const div = document.createElement('div');
         div.className = 'text-xs bg-yellow-100 px-2 py-1 rounded';
         div.textContent = `• ${recipe.product_name} (${recipe.product_unit})`;
         recipeDetails.appendChild(div);
     });
-    
+
     document.getElementById('forceDeleteConfirmButton').href = '/cornerbites-sia/process/simpan_produk.php?action=delete&force=1&id=' + productId;
     document.getElementById('forceDeleteModal').classList.remove('hidden');
 }

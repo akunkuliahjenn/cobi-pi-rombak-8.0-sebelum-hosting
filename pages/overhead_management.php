@@ -230,28 +230,25 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'overhead') {
         <?php if ($page_overhead > 1): ?>
             <a href="javascript:void(0)" onclick="loadOverheadData(<?php echo $page_overhead - 1; ?>)"
                class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
-                <?php echo $page_overhead - 1; ?>
+                Prev
             </a>
         <?php endif; ?>
 
-        <a href="javascript:void(0)" onclick="loadOverheadData(<?php echo $page_overhead; ?>)"
-           class="px-3 py-2 text-sm bg-blue-600 text-white rounded-md">
-            <?php echo $page_overhead; ?>
-        </a>
+        <?php 
+        $start_page = max(1, $page_overhead - 2);
+        $end_page = min($total_pages_overhead, $page_overhead + 2);
+        for ($i = $start_page; $i <= $end_page; $i++): 
+        ?>
+            <a href="javascript:void(0)" onclick="loadOverheadData(<?php echo $i; ?>)"
+               class="px-3 py-2 text-sm <?php echo ($i == $page_overhead) ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'; ?> rounded-md transition-colors">
+                <?php echo $i; ?>
+            </a>
+        <?php endfor; ?>
 
         <?php if ($page_overhead < $total_pages_overhead): ?>
             <a href="javascript:void(0)" onclick="loadOverheadData(<?php echo $page_overhead + 1; ?>)"
                class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
-                <?php echo $page_overhead + 1; ?>
-            </a>
-        <?php endif; ?>
-
-        <?php if ($page_overhead < $total_pages_overhead): ?>
-            <a href="javascript:void(0)" onclick="loadOverheadData(<?php echo $page_overhead + 1; ?>)"
-               class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                </svg>
+                Next
             </a>
         <?php endif; ?>
     </div>
@@ -334,28 +331,25 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
         <?php if ($page_labor > 1): ?>
             <a href="javascript:void(0)" onclick="loadLaborData(<?php echo $page_labor - 1; ?>)"
                class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
-                <?php echo $page_labor - 1; ?>
+                Prev
             </a>
         <?php endif; ?>
 
-        <a href="javascript:void(0)" onclick="loadLaborData(<?php echo $page_labor; ?>)"
-           class="px-3 py-2 text-sm bg-blue-600 text-white rounded-md">
-            <?php echo $page_labor; ?>
-        </a>
+        <?php 
+        $start_page = max(1, $page_labor - 2);
+        $end_page = min($total_pages_labor, $page_labor + 2);
+        for ($i = $start_page; $i <= $end_page; $i++): 
+        ?>
+            <a href="javascript:void(0)" onclick="loadLaborData(<?php echo $i; ?>)"
+               class="px-3 py-2 text-sm <?php echo ($i == $page_labor) ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'; ?> rounded-md transition-colors">
+                <?php echo $i; ?>
+            </a>
+        <?php endfor; ?>
 
         <?php if ($page_labor < $total_pages_labor): ?>
             <a href="javascript:void(0)" onclick="loadLaborData(<?php echo $page_labor + 1; ?>)"
                class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
-                <?php echo $page_labor + 1; ?>
-            </a>
-        <?php endif; ?>
-
-        <?php if ($page_labor < $total_pages_labor): ?>
-            <a href="javascript:void(0)" onclick="loadLaborData(<?php echo $page_labor + 1; ?>)"
-               class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                </svg>
+                Next
             </a>
         <?php endif; ?>
     </div>

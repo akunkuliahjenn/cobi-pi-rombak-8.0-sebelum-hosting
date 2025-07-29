@@ -130,6 +130,14 @@ document.addEventListener('DOMContentLoaded', function() {
     limitSelects.forEach(select => {
         select.addEventListener('change', function() {
             saveScrollPosition();
+            
+            // Simpan nilai limit yang berubah ke localStorage segera
+            if (this.id === 'bahan_limit') {
+                localStorage.setItem('bahan_limit_state', this.value);
+            } else if (this.id === 'kemasan_limit') {
+                localStorage.setItem('kemasan_limit_state', this.value);
+            }
+            
             // Langsung trigger pencarian dengan limit baru
             const searchType = this.id === 'bahan_limit' ? 'raw' : 'kemasan';
             const searchInput = document.getElementById(searchType === 'raw' ? 'search_raw' : 'search_kemasan');
@@ -745,11 +753,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (bahanLimit) {
-        bahanLimit.addEventListener('change', handleSearchRaw);
+        bahanLimit.addEventListener('change', function() {
+            // Simpan perubahan limit segera
+            localStorage.setItem('bahan_limit_state', this.value);
+            handleSearchRaw();
+        });
     }
 
     if (kemasanLimit) {
-kemasanLimit.addEventListener('change', handleSearchKemasan);
+        kemasanLimit.addEventListener('change', function() {
+            // Simpan perubahan limit segera
+            localStorage.setItem('kemasan_limit_state', this.value);
+            handleSearchKemasan();
+        });
     }
 
     // Set up price formatting
@@ -822,11 +838,24 @@ function restoreLimitStates() {
     const bahanLimit = document.getElementById('bahan_limit');
     const kemasanLimit = document.getElementById('kemasan_limit');
 
-    if (bahanLimit && localStorage.getItem('bahan_limit_state')) {
-        bahanLimit.value = localStorage.getItem('bahan_limit_state');
+    // Set default limit 5 untuk bahan baku jika tidak ada yang tersimpan
+    if (bahanLimit) {
+        const savedBahanLimit = localStorage.getItem('bahan_limit_state');
+        bahanLimit.value = savedBahanLimit || '5';
+        // Simpan default jika belum ada
+        if (!savedBahanLimit) {
+            localStorage.setItem('bahan_limit_state', '5');
+        }
     }
-    if (kemasanLimit && localStorage.getItem('kemasan_limit_state')) {
-        kemasanLimit.value = localStorage.getItem('kemasan_limit_state');
+    
+    // Set default limit 5 untuk kemasan jika tidak ada yang tersimpan
+    if (kemasanLimit) {
+        const savedKemasanLimit = localStorage.getItem('kemasan_limit_state');
+        kemasanLimit.value = savedKemasanLimit || '5';
+        // Simpan default jika belum ada
+        if (!savedKemasanLimit) {
+            localStorage.setItem('kemasan_limit_state', '5');
+        }
     }
 
     // Restore active tab

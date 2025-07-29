@@ -31,7 +31,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
                 $whereParams[':search'] = '%' . $searchQueryRaw . '%';
             }
 
-            $rawMaterials = selectWithUserId($conn, 'raw_materials', '*', $whereClause, $whereParams, 'name ASC', $rawMaterialsLimit);
+            $rawMaterials = selectWithUserId($conn, 'raw_materials', '*', $whereClause, $whereParams, 'name ASC', "$rawMaterialsLimit OFFSET " . (isset($_GET['raw_page']) ? max((int)$_GET['raw_page'] - 1, 0) * $rawMaterialsLimit : 0));
 
             // Output raw materials table
             if (!empty($rawMaterials)): ?>
@@ -96,12 +96,48 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
                 </div>
             <?php endif;
 
+            // Add pagination controls
+            $currentPage = isset($_GET['raw_page']) ? max((int)$_GET['raw_page'], 1) : 1;
+            $totalPages = ceil($totalRawCount / $rawMaterialsLimit);
+            
+            if ($totalPages > 1): ?>
+                <!-- Info pagination di bawah -->
+                <div class="mt-4 text-sm text-gray-600">
+                    Menampilkan <?php echo (($currentPage - 1) * $rawMaterialsLimit) + 1; ?> sampai <?php echo min($currentPage * $rawMaterialsLimit, $totalRawCount); ?> dari <?php echo $totalRawCount; ?> hasil
+                </div>
+
+                <!-- Pagination for Raw Materials -->
+                <div class="flex items-center justify-end mt-4 space-x-2">
+                    <?php if ($currentPage > 1): ?>
+                        <a href="javascript:void(0)" onclick="loadRawData(<?php echo $currentPage - 1; ?>)"
+                           class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
+                            Prev
+                        </a>
+                    <?php endif; ?>
+
+                    <?php 
+                    $startPage = max(1, $currentPage - 2);
+                    $endPage = min($totalPages, $currentPage + 2);
+                    for ($i = $startPage; $i <= $endPage; $i++): 
+                    ?>
+                        <a href="javascript:void(0)" onclick="loadRawData(<?php echo $i; ?>)"
+                           class="px-3 py-2 text-sm <?php echo ($i == $currentPage) ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'; ?> rounded-md transition-colors">
+                            <?php echo $i; ?>
+                        </a>
+                    <?php endfor; ?>
+
+                    <?php if ($currentPage < $totalPages): ?>
+                        <a href="javascript:void(0)" onclick="loadRawData(<?php echo $currentPage + 1; ?>)"
+                           class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
+                            Next
+                        </a>
+                    <?php endif; ?>
+                </div>
+            <?php endif;
+
             // Add pagination info for AJAX
             echo '<script>updateRawPaginationInfo(' . $totalRawCount . ', ' . $rawMaterialsLimit . ');</script>';
             echo '<script>updateTotalCount("total-raw-count", ' . $totalRawCount . ');</script>';
-
-            // Hide pagination if total items fit in current limit
-            echo '<script>setTimeout(() => { checkAndHidePagination("raw", ' . $rawMaterialsLimit . '); }, 100);</script>';
 
             // Update tab badge for bahan
             $totalBahanForBadge = countWithUserId($conn, 'raw_materials', "type = 'bahan'");
@@ -130,7 +166,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
                 $whereParams[':search'] = '%' . $searchQueryPackaging . '%';
             }
 
-            $packagingMaterials = selectWithUserId($conn, 'raw_materials', '*', $whereClause, $whereParams, 'name ASC', $packagingMaterialsLimit);
+            $packagingMaterials = selectWithUserId($conn, 'raw_materials', '*', $whereClause, $whereParams, 'name ASC', "$packagingMaterialsLimit OFFSET " . (isset($_GET['kemasan_page']) ? max((int)$_GET['kemasan_page'] - 1, 0) * $packagingMaterialsLimit : 0));
 
             // Output packaging materials table
             if (!empty($packagingMaterials)): ?>
@@ -195,12 +231,51 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
                 </div>
             <?php endif;
 
+            // Add pagination controls
+            $currentPage = isset($_GET['kemasan_page']) ? max((int)$_GET['kemasan_page'], 1) : 1;
+            $totalPages = ceil($totalKemasanCount / $packagingMaterialsLimit);
+            
+            if ($totalPages > 1): ?>
+                <!-- Info pagination di bawah -->
+                <div class="mt-4 text-sm text-gray-600">
+                    Menampilkan <?php echo (($currentPage - 1) * $packagingMaterialsLimit) + 1; ?> sampai <?php echo min($currentPage * $packagingMaterialsLimit, $totalKemasanCount); ?> dari <?php echo $totalKemasanCount; ?> hasil
+                </div>
+
+                <!-- Pagination for Packaging Materials -->
+                <div class="flex items-center justify-end mt-4 space-x-2">
+                    <?php if ($currentPage > 1): ?>
+                        <a href="javascript:void(0)" onclick="loadKemasanData(<?php echo $currentPage - 1; ?>)"
+                           class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
+                            <?php echo $currentPage - 1; ?>
+                        </a>
+                    <?php endif; ?>
+
+                    <a href="javascript:void(0)" onclick="loadKemasanData(<?php echo $currentPage; ?>)"
+                       class="px-3 py-2 text-sm bg-blue-600 text-white rounded-md">
+                        <?php echo $currentPage; ?>
+                    </a>
+
+                    <?php if ($currentPage < $totalPages): ?>
+                        <a href="javascript:void(0)" onclick="loadKemasanData(<?php echo $currentPage + 1; ?>)"
+                           class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
+                            <?php echo $currentPage + 1; ?>
+                        </a>
+                    <?php endif; ?>
+
+                    <?php if ($currentPage < $totalPages): ?>
+                        <a href="javascript:void(0)" onclick="loadKemasanData(<?php echo $currentPage + 1; ?>)"
+                           class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    <?php endif; ?>
+                </div>
+            <?php endif;
+
             // Add pagination info for AJAX
             echo '<script>updateKemasanPaginationInfo(' . $totalKemasanCount . ', ' . $packagingMaterialsLimit . ');</script>';
             echo '<script>updateTotalCount("total-kemasan-count", ' . $totalKemasanCount . ');</script>';
-
-            // Hide pagination if total items fit in current limit
-            echo '<script>setTimeout(() => { checkAndHidePagination("kemasan", ' . $packagingMaterialsLimit . '); }, 100);</script>';
 
             // Update tab badge for kemasan
             $totalKemasanForBadge = countWithUserId($conn, 'raw_materials', "type = 'kemasan'");
@@ -521,7 +596,7 @@ function buildPaginationUrl($baseUrl, $paramsToUpdate) {
                                 </div>
 
                                 <div>
-                                    <label for="bahan_limit" class="block text-sm font-medium text-gray-700 mb-2">Data per Halaman</label>
+                                    <label for="bahan_limit" class="block text-sm font-medium text-gray-700 mb-2">Per Halaman</label>
                                     <select id="bahan_limit" name="bahan_limit" 
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                                         <?php foreach ($rawMaterialsLimitOptions as $option): ?>
@@ -608,72 +683,7 @@ function buildPaginationUrl($baseUrl, $paramsToUpdate) {
                             <?php endif; ?>
                         </div>
 
-                        <!-- Pagination Bahan Baku -->
-                        <?php if ($totalRawMaterialsRows > $rawMaterialsLimit): ?>
-                            <div class="flex items-center justify-between border-t border-gray-200 pt-6">
-                                <div class="flex-1 flex justify-between sm:hidden">
-                                    <?php if ($rawMaterialsPage > 1): ?>
-                                        <a href="<?php echo buildPaginationUrl('bahan_baku.php', ['bahan_page' => $rawMaterialsPage - 1]); ?>" 
-                                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                            Sebelumnya
-                                        </a>
-                                    <?php endif; ?>
-                                    <?php if ($rawMaterialsPage < $totalRawMaterialsPages): ?>
-                                        <a href="<?php echo buildPaginationUrl('bahan_baku.php', ['bahan_page' => $rawMaterialsPage + 1]); ?>" 
-                                           class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                            Selanjutnya
-                                        </a>
-                                    <?php endif; ?>
-                                </div>
-                                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                                    <div>
-                                        <p class="text-sm text-gray-700">
-                                            Menampilkan
-                                            <span class="font-medium"><?php echo (($rawMaterialsPage - 1) * $rawMaterialsLimit) + 1; ?></span>
-                                            sampai
-                                            <span class="font-medium"><?php echo min($rawMaterialsPage * $rawMaterialsLimit, $totalRawMaterialsRows); ?></span>
-                                            dari
-                                            <span class="font-medium"><?php echo $totalRawMaterialsRows; ?></span>
-                                            hasil
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                                            <?php if ($rawMaterialsPage > 1): ?>
-                                                <a href="<?php echo buildPaginationUrl('bahan_baku.php', ['bahan_page' => $rawMaterialsPage - 1]); ?>" 
-                                                   class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                                    <span class="sr-only">Previous</span>
-                                                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                                    </svg>
-                                                </a>
-                                            <?php endif; ?>
-
-                                            <?php
-                                            $startPage = max(1, $rawMaterialsPage - 2);
-                                            $endPage = min($totalRawMaterialsPages, $rawMaterialsPage + 2);
-                                            for ($i = $startPage; $i <= $endPage; $i++): 
-                                            ?>
-                                                <a href="<?php echo buildPaginationUrl('bahan_baku.php', ['bahan_page' => $i]); ?>" 
-                                                   class="relative inline-flex items-center px-4 py-2 border text-sm font-medium <?php echo ($i == $rawMaterialsPage) ? 'z-10 bg-blue-50 border-blue-500 text-blue-600' : 'border-gray-300 bg-white text-gray-500 hover:bg-gray-50'; ?>">
-                                                    <?php echo $i; ?>
-                                                </a>
-                                            <?php endfor; ?>
-
-                                            <?php if ($rawMaterialsPage < $totalRawMaterialsPages): ?>
-                                                <a href="<?php echo buildPaginationUrl('bahan_baku.php', ['bahan_page' => $rawMaterialsPage + 1]); ?>" 
-                                                   class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                                    <span class="sr-only">Next</span>
-                                                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                                                    </svg>
-                                                </a>
-                                            <?php endif; ?>
-                                        </nav>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endif; ?>
+                        <!-- Pagination will be loaded via AJAX -->
                     </div>
 
                     <!-- Tab Content: Kemasan -->
@@ -790,72 +800,7 @@ function buildPaginationUrl($baseUrl, $paramsToUpdate) {
                             <?php endif; ?>
                         </div>
 
-                        <!-- Pagination Kemasan -->
-                        <?php if ($totalPackagingMaterialsRows > $packagingMaterialsLimit): ?>
-                            <div class="flex items-center justify-between border-t border-gray-200 pt-6">
-                                <div class="flex-1 flex justify-between sm:hidden">
-                                    <?php if ($packagingMaterialsPage > 1): ?>
-                                        <a href="<?php echo buildPaginationUrl('bahan_baku.php', ['kemasan_page' => $packagingMaterialsPage - 1]); ?>" 
-                                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                            Sebelumnya
-                                        </a>
-                                    <?php endif; ?>
-                                    <?php if ($packagingMaterialsPage < $totalPackagingMaterialsPages): ?>
-                                        <a href="<?php echo buildPaginationUrl('bahan_baku.php', ['kemasan_page' => $packagingMaterialsPage + 1]); ?>" 
-                                           class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                            Selanjutnya
-                                        </a>
-                                    <?php endif; ?>
-                                </div>
-                                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                                    <div>
-                                        <p class="text-sm text-gray-700">
-                                            Menampilkan
-                                            <span class="font-medium"><?php echo (($packagingMaterialsPage - 1) * $packagingMaterialsLimit) + 1; ?></span>
-                                            sampai
-                                            <span class="font-medium"><?php echo min($packagingMaterialsPage * $packagingMaterialsLimit, $totalPackagingMaterialsRows); ?></span>
-                                            dari
-                                            <span class="font-medium"><?php echo $totalPackagingMaterialsRows; ?></span>
-                                            hasil
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                                            <?php if ($packagingMaterialsPage > 1): ?>
-                                                <a href="<?php echo buildPaginationUrl('bahan_baku.php', ['kemasan_page' => $packagingMaterialsPage - 1]); ?>" 
-                                                   class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                                    <span class="sr-only">Previous</span>
-                                                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                                    </svg>
-                                                </a>
-                                            <?php endif; ?>
-
-                                            <?php
-                                            $startPage = max(1, $packagingMaterialsPage - 2);
-                                            $endPage = min($totalPackagingMaterialsPages, $packagingMaterialsPage + 2);
-                                            for ($i = $startPage; $i <= $endPage; $i++): 
-                                            ?>
-                                                <a href="<?php echo buildPaginationUrl('bahan_baku.php', ['kemasan_page' => $i]); ?>" 
-                                                   class="relative inline-flex items-center px-4 py-2 border text-sm font-medium <?php echo ($i == $packagingMaterialsPage) ? 'z-10 bg-blue-50 border-blue-500 text-blue-600' : 'border-gray-300 bg-white text-gray-500 hover:bg-gray-50'; ?>">
-                                                    <?php echo $i; ?>
-                                                </a>
-                                            <?php endfor; ?>
-
-                                            <?php if ($packagingMaterialsPage < $totalPackagingMaterialsPages): ?>
-                                                <a href="<?php echo buildPaginationUrl('bahan_baku.php', ['kemasan_page' => $packagingMaterialsPage + 1]); ?>" 
-                                                   class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                                    <span class="sr-only">Next</span>
-                                                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                                                    </svg>
-                                                </a>
-                                            <?php endif; ?>
-                                        </nav>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endif; ?>
+                        <!-- Pagination will be loaded via AJAX -->
                     </div>
                 </div>
             </div>
@@ -903,4 +848,107 @@ function buildPaginationUrl($baseUrl, $paramsToUpdate) {
 </div></div>
 
 <script src="../assets/js/bahan_baku.js"></script>
+<script>
+// Initialize the page
+document.addEventListener('DOMContentLoaded', function() {
+    // Load initial data
+    loadRawData(1);
+    loadKemasanData(1);
+
+    // Set up search handlers
+    setupSearchHandlers();
+
+    // Set up limit change handlers
+    setupLimitHandlers();
+});
+
+function setupSearchHandlers() {
+    const rawSearch = document.getElementById('search_raw');
+    const kemasanSearch = document.getElementById('search_kemasan');
+
+    let rawTimeout;
+    let kemasanTimeout;
+
+    if (rawSearch) {
+        rawSearch.addEventListener('input', function() {
+            clearTimeout(rawTimeout);
+            rawTimeout = setTimeout(() => {
+                loadRawData(1);
+            }, 500);
+        });
+    }
+
+    if (kemasanSearch) {
+        kemasanSearch.addEventListener('input', function() {
+            clearTimeout(kemasanTimeout);
+            kemasanTimeout = setTimeout(() => {
+                loadKemasanData(1);
+            }, 500);
+        });
+    }
+}
+
+function setupLimitHandlers() {
+    const rawLimit = document.getElementById('bahan_limit');
+    const kemasanLimit = document.getElementById('kemasan_limit');
+
+    if (rawLimit) {
+        rawLimit.addEventListener('change', function() {
+            loadRawData(1);
+        });
+    }
+
+    if (kemasanLimit) {
+        kemasanLimit.addEventListener('change', function() {
+            loadKemasanData(1);
+        });
+    }
+}
+
+function loadRawData(page = 1) {
+    const search = document.getElementById('search_raw')?.value || '';
+    const limit = document.getElementById('bahan_limit')?.value || 5;
+
+    const params = new URLSearchParams({
+        ajax: '1',
+        ajax_type: 'raw',
+        raw_page: page,
+        search_raw: search,
+        bahan_limit: limit
+    });
+
+    fetch(`${window.location.pathname}?${params.toString()}`)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('raw-materials-container').innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error loading raw materials data:', error);
+            document.getElementById('raw-materials-container').innerHTML = '<div class="text-center text-red-500 py-4">Error loading data</div>';
+        });
+}
+
+function loadKemasanData(page = 1) {
+    const search = document.getElementById('search_kemasan')?.value || '';
+    const limit = document.getElementById('kemasan_limit')?.value || 5;
+
+    const params = new URLSearchParams({
+        ajax: '1',
+        ajax_type: 'kemasan',
+        kemasan_page: page,
+        search_kemasan: search,
+        kemasan_limit: limit
+    });
+
+    fetch(`${window.location.pathname}?${params.toString()}`)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('packaging-materials-container').innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error loading packaging materials data:', error);
+            document.getElementById('packaging-materials-container').innerHTML = '<div class="text-center text-red-500 py-4">Error loading data</div>';
+        });
+}
+</script>
 <?php include_once __DIR__ . '/../includes/footer.php'; ?>
