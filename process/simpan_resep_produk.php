@@ -48,9 +48,9 @@ function calculateHPPForProduct($conn, $product_id, $production_yield = 1, $prod
         $laborCostPerBatch += $labor['total_cost'];
     }
 
-    // 3. BIAYA OVERHEAD MANUAL dengan user isolation - gunakan final_amount yang sudah tersimpan
+    // 3. BIAYA OVERHEAD MANUAL dengan user isolation
     $stmtManualOverhead = $conn->prepare("
-        SELECT pom.final_amount
+        SELECT pom.final_amount, oc.allocation_method
         FROM product_overhead_manual pom
         JOIN overhead_costs oc ON pom.overhead_id = oc.id
         WHERE pom.product_id = ? AND pom.user_id = ? AND oc.user_id = ? AND oc.is_active = 1
@@ -60,8 +60,16 @@ function calculateHPPForProduct($conn, $product_id, $production_yield = 1, $prod
 
     $overheadCostPerBatch = 0;
     foreach ($manualOverheadCosts as $overhead) {
-        // Gunakan final_amount yang sudah dihitung dengan benar saat menambahkan overhead
-        $overheadCostPerBatch += $overhead['final_amount'];
+        $finalAmount = $overhead['final_amount'];
+        $allocationMethod = $overhead['allocation_method'] ?? 'per_batch';
+        
+        // Untuk per_unit, kalikan dengan production yield untuk mendapatkan total cost per batch
+        if ($allocationMethod === 'per_unit') {
+            $overheadCostPerBatch += $finalAmount * $production_yield;
+        } else {
+            // Untuk per_batch, per_hour, percentage - gunakan langsung final_amount
+            $overheadCostPerBatch += $finalAmount;
+        }
     }
 
     // 4. TOTAL HPP
@@ -198,7 +206,7 @@ try {
                 $checkStmt->execute([$product_id, $overhead_id]);
                 if ($checkStmt->fetchColumn()) { throw new Exception('Overhead ini sudah ditambahkan.'); }
 
-                $overheadStmt = $conn->prepare("SELECT name, amount, allocation_method FROM overhead_costs WHERE id = ? AND is_active = 1");
+                $overheadStmt = $conn->prepare("SELECT name, amount, allocation_method, estimated_uses FROM overhead_costs WHERE id = ? AND is_active = 1");
                 $overheadStmt->execute([$overhead_id]);
                 $overhead = $overheadStmt->fetch(PDO::FETCH_ASSOC);
                 if (!$overhead) { throw new Exception('Data overhead tidak ditemukan.'); }
@@ -222,9 +230,9 @@ try {
                         $finalAmount = $baseAmount;
                         break;
                     case 'per_unit':
-                        // Per unit: baseAmount dibagi dengan production yield, dibagi estimated uses
-                        // Contoh: 15.000 ÷ 20 unit ÷ 30x = 25 per unit per batch
-                        $finalAmount = $baseAmount / $productionYield / $estimatedUses;
+                        // Per unit: baseAmount dibagi estimated uses (ini adalah cost per unit)
+                        // Contoh: Gas 22.000 ÷ 1x pakai = 22.000 per unit
+                        $finalAmount = $baseAmount / $estimatedUses;
                         break;
                     case 'per_hour':
                         // Per hour dikali dengan production time, dibagi estimated uses  
@@ -232,8 +240,8 @@ try {
                         break;
                     case 'per_batch':
                     default:
-                        // Per batch: baseAmount dibagi dengan estimated uses
-                        // Contoh: Gas 22.000 ÷ 30x = 733.33 per batch
+                        // Per batch: baseAmount dibagi estimated uses (ini adalah cost per batch)
+                        // Contoh: Listrik 300.000 ÷ 20x pakai = 15.000 per batch
                         $finalAmount = $baseAmount / $estimatedUses;
                         break;
                 }

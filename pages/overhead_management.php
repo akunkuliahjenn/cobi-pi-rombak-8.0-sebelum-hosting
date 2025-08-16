@@ -525,7 +525,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                                     <select id="allocation_method" name="allocation_method" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
                                         <option value="per_batch">Per Batch Produksi</option>
                                         <option value="per_unit">Per Unit Produk</option>
-                                        <option value="per_hour">Per Jam Produksi</option>
                                         <option value="percentage">Persentase dari Penjualan</option>
                                     </select>
                                 </div>

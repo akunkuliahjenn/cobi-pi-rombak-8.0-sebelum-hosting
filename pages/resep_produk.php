@@ -763,14 +763,14 @@ try {
                                                                     echo "Persentase: " . number_format($amount, 1) . "%";
                                                                     break;
                                                                 case 'per_unit':
-                                                                    echo "Rp " . number_format($amount, 0, ',', '.') . " ÷ " . $hppCalculation['production_yield'] . " unit ÷ " . $estimatedUses . "x pakai";
+                                                                    echo "Rp " . number_format($amount, 0, ',', '.') . " ÷ " . $estimatedUses . "x pakai";
                                                                     break;
                                                                 case 'per_hour':
                                                                     echo "Rp " . number_format($amount, 0, ',', '.') . " × " . number_format($hppCalculation['production_time_hours'], 1) . " jam ÷ " . $estimatedUses . "x pakai";
                                                                     break;
                                                                 case 'per_batch':
                                                                 default:
-                                                                    echo "Rp " . number_format($amount, 0, ',', '.') . " ÷ " . $estimatedUses . "x pakai";
+                                                                    echo "Rp " . number_format($amount, 0, ',', '.') . " ÷ " . $hppCalculation['production_yield'] . " unit ÷ " . $estimatedUses . "x pakai";
                                                                     break;
                                                             }
                                                             ?>
