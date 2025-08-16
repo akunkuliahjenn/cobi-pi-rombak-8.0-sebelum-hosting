@@ -48,7 +48,7 @@ function calculateHPPForProduct($conn, $product_id, $production_yield = 1, $prod
         $laborCostPerBatch += $labor['total_cost'];
     }
 
-    // 3. BIAYA OVERHEAD MANUAL dengan user isolation
+    // 3. BIAYA OVERHEAD MANUAL dengan user isolation - gunakan final_amount yang sudah tersimpan
     $stmtManualOverhead = $conn->prepare("
         SELECT pom.final_amount
         FROM product_overhead_manual pom
@@ -60,6 +60,7 @@ function calculateHPPForProduct($conn, $product_id, $production_yield = 1, $prod
 
     $overheadCostPerBatch = 0;
     foreach ($manualOverheadCosts as $overhead) {
+        // Gunakan final_amount yang sudah dihitung dengan benar saat menambahkan overhead
         $overheadCostPerBatch += $overhead['final_amount'];
     }
 
@@ -209,25 +210,42 @@ try {
                 $productionYield = $product['production_yield'] ?? 1;
                 $productionTimeHours = $product['production_time_hours'] ?? 1;
 
-                // Calculate final amount based on allocation method
+                // Calculate final amount based on allocation method and estimated uses
                 $finalAmount = 0;
-                $allocationMethod = $overhead['allocation_method'] ?? 'fixed';
+                $allocationMethod = $overhead['allocation_method'] ?? 'per_batch';
+                $estimatedUses = max(1, $overhead['estimated_uses'] ?? 1); // Pastikan tidak dibagi 0
+                $baseAmount = $overhead['amount'];
 
                 switch ($allocationMethod) {
                     case 'percentage':
-                        $finalAmount = $overhead['amount'];
+                        // Untuk percentage, gunakan langsung amount sebagai persentase
+                        $finalAmount = $baseAmount;
                         break;
                     case 'per_unit':
-                        $finalAmount = $overhead['amount'] * $productionYield;
+                        // Per unit dikali dengan production yield, dibagi estimated uses
+                        $finalAmount = ($baseAmount * $productionYield) / $estimatedUses;
                         break;
                     case 'per_hour':
-                        $finalAmount = $overhead['amount'] * $productionTimeHours;
+                        // Per hour dikali dengan production time, dibagi estimated uses  
+                        $finalAmount = ($baseAmount * $productionTimeHours) / $estimatedUses;
                         break;
-                    case 'fixed':
+                    case 'per_batch':
                     default:
-                        $finalAmount = $overhead['amount'];
+                        // Per batch dibagi dengan estimated uses untuk mendapat biaya per batch
+                        // Contoh: Gas 22.000 / 200x = 110 per batch
+                        $finalAmount = $baseAmount / $estimatedUses;
                         break;
                 }
+
+                // Debug log untuk memverifikasi perhitungan
+                error_log("Debug Overhead Calculation:");
+                error_log("- Overhead Name: " . $overhead['name']);
+                error_log("- Base Amount: " . $baseAmount);
+                error_log("- Allocation Method: " . $allocationMethod);
+                error_log("- Estimated Uses: " . $estimatedUses);
+                error_log("- Production Yield: " . $productionYield);
+                error_log("- Production Time Hours: " . $productionTimeHours);
+                error_log("- Final Amount Calculated: " . $finalAmount);
 
                 $stmt = $conn->prepare("INSERT INTO product_overhead_manual (product_id, overhead_id, custom_amount, final_amount, user_id) VALUES (?, ?, ?, ?, ?)");
                 $stmt->execute([$product_id, $overhead_id, $overhead['amount'], $finalAmount, $_SESSION['user_id']]);

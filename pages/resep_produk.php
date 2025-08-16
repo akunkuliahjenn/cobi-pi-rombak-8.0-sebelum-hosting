@@ -197,7 +197,7 @@ try {
 
             // Ambil overhead manual yang sudah dipilih untuk produk ini dengan user isolation
             $stmtManualOverhead = $conn->prepare("
-                SELECT pom.*, oc.name, oc.description, oc.allocation_method, oc.amount as default_amount
+                SELECT pom.*, oc.name, oc.description, oc.allocation_method, oc.amount as default_amount, oc.estimated_uses, pom.final_amount
                 FROM product_overhead_manual pom
                 JOIN overhead_costs oc ON pom.overhead_id = oc.id
                 WHERE pom.product_id = ? AND pom.user_id = ? AND oc.user_id = ? AND oc.is_active = 1
@@ -207,7 +207,32 @@ try {
             $manualOverheadCosts = $stmtManualOverhead->fetchAll(PDO::FETCH_ASSOC);
 
             foreach ($manualOverheadCosts as $overhead) {
-                $overheadCostPerBatch += $overhead['final_amount'];
+                // Gunakan final_amount yang sudah tersimpan di database untuk card
+                $finalAmountForCard = $overhead['final_amount'] ?? 0;
+
+                // Hitung final amount per unit untuk detail breakdown
+                $allocationMethod = $overhead['allocation_method'] ?? 'per_batch';
+                $estimatedUses = $overhead['estimated_uses'] ?? 1;
+                $finalAmountPerUnit = 0;
+
+                switch ($allocationMethod) {
+                    case 'percentage':
+                        $finalAmountPerUnit = $overhead['default_amount'];
+                        break;
+                    case 'per_unit':
+                        $finalAmountPerUnit = ($overhead['default_amount'] * $productionYield) / $estimatedUses;
+                        break;
+                    case 'per_hour':
+                        $finalAmountPerUnit = ($overhead['default_amount'] * $estimatedProductionTimeHours) / $estimatedUses;
+                        break;
+                    case 'per_batch':
+                    default:
+                        $finalAmountPerUnit = $overhead['default_amount'] / $estimatedUses;
+                        break;
+                }
+
+                // Untuk card biaya overhead, gunakan nilai asli dari database
+                $overheadCostPerBatch += $finalAmountForCard;
 
                 $overheadDetails[] = [
                     'name' => $overhead['name'],
@@ -215,9 +240,10 @@ try {
                     'amount' => $overhead['custom_amount'] ?? $overhead['default_amount'],
                     'allocation_method' => $overhead['allocation_method'],
                     'description' => $overhead['description'],
-                    'cost_per_item' => $overhead['final_amount'],
+                    'cost_per_item' => $finalAmountPerUnit, // Untuk detail breakdown, gunakan nilai per unit
                     'category' => 'overhead',
-                    'manual_id' => $overhead['id']
+                    'manual_id' => $overhead['id'],
+                    'estimated_uses' => $estimatedUses
                 ];
             }
 
@@ -738,8 +764,7 @@ try {
                                             <div class="flex-1 text-center">
                                                 <span class="text-sm text-gray-600">
                                                     <?php echo ucfirst(str_replace('_', ' ', $detail['allocation_method'])); ?>: 
-                                                    <?php echo number_format($detail['amount'], 0, ',', '.'); ?>
-                                                    <?php echo $detail['allocation_method'] == 'percentage' ? '%' : ($detail['allocation_method'] == 'per_hour' ? '/jam' : '/unit'); ?>
+                                                    Rp <?php echo number_format($detail['cost_per_item'], 0, ',', '.'); ?> per unit
                                                 </span>
                                             </div>
                                             <div class="flex-1 text-right flex items-center justify-end space-x-4">
