@@ -757,20 +757,20 @@ try {
                                                             $estimatedUses = $detail['estimated_uses'] ?? 1;
                                                             $costPerBatch = $detail['cost_per_batch'];
                                                             $costPerUnit = $detail['cost_per_unit'];
-                                                            
+
                                                             switch ($method) {
                                                                 case 'percentage':
                                                                     echo "Persentase: " . number_format($amount, 1) . "%";
                                                                     break;
                                                                 case 'per_unit':
-                                                                    echo "Rp " . number_format($amount, 0, ',', '.') . " ÷ " . $estimatedUses . "x pakai";
+                                                                    echo "Rp " . number_format($amount, 0, ',', '.') . " ÷ " . $hppCalculation['production_yield'] . " unit ÷ " . $estimatedUses . "x pakai";
                                                                     break;
                                                                 case 'per_hour':
                                                                     echo "Rp " . number_format($amount, 0, ',', '.') . " × " . number_format($hppCalculation['production_time_hours'], 1) . " jam ÷ " . $estimatedUses . "x pakai";
                                                                     break;
                                                                 case 'per_batch':
                                                                 default:
-                                                                    echo "Rp " . number_format($amount, 0, ',', '.') . " ÷ " . $hppCalculation['production_yield'] . " unit ÷ " . $estimatedUses . "x pakai";
+                                                                    echo "Rp " . number_format($amount, 0, ',', '.') . " ÷ " . $estimatedUses . "x pakai";
                                                                     break;
                                                             }
                                                             ?>
@@ -965,7 +965,7 @@ try {
                                 try {
                                     // Ambil overhead yang belum dipilih untuk produk ini dengan user isolation
                                     $stmtAvailableOverhead = $conn->prepare("
-                                        SELECT oc.id, oc.name, oc.description, oc.allocation_method, oc.amount 
+                                        SELECT oc.id, oc.name, oc.description, oc.allocation_method, oc.amount, oc.estimated_uses
                                         FROM overhead_costs oc 
                                         WHERE oc.is_active = 1 AND oc.user_id = ?
                                         AND oc.id NOT IN (

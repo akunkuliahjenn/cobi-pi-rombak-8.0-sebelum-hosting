@@ -417,16 +417,19 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                                 </summary>
                                 <div class="mt-2 pl-4 pr-2 pb-2 border-l-2 border-blue-300 space-y-3">
                                     <div>
-                                        <strong class="block text-sm text-gray-900">• Jumlah Biaya Total</strong>
-                                        <p class="pl-2 text-sm text-gray-700">Masukkan harga total dari item ini. Contoh: Harga 1 tabung gas, atau total tagihan listrik 1 bulan.</p>
+                                        <strong class="block text-sm text-gray-900">Jumlah Biaya Total</strong>
+                                        <p class="pl-2 text-sm text-gray-700">→ Isi biaya yang mau dicatat.<br>
+                                        Contoh: harga 1 tabung gas, atau tagihan listrik sebulan.</p>
                                     </div>
                                     <div>
-                                        <strong class="block text-sm text-gray-900">• Metode Alokasi</strong>
-                                        <p class="pl-2 text-sm text-gray-700">Pilih cara membagi biaya ini ke setiap produksi. "Per Batch" adalah pilihan paling umum untuk biaya bersama.</p>
+                                        <strong class="block text-sm text-gray-900">Metode Alokasi</strong>
+                                        <p class="pl-2 text-sm text-gray-700">→ Pilih cara membagi biaya ke produk.<br>
+                                        (Umumnya: Per Batch untuk biaya bulanan, Per Unit untuk biaya habis pakai).</p>
                                     </div>
                                     <div>
-                                        <strong class="block text-sm text-gray-900">• Estimasi Pemakaian Total</strong>
-                                        <p class="pl-2 text-sm text-gray-700">Masukkan "angka pembagi" untuk biaya ini. Lihat contoh di bawah untuk panduan lebih lanjut.</p>
+                                        <strong class="block text-sm text-gray-900">Estimasi Pemakaian Total</strong>
+                                        <p class="pl-2 text-sm text-gray-700">→ Masukkan angka pembagi.<br>
+                                        Contoh: 1 tabung gas habis untuk 100 unit produk → tulis 100.</p>
                                     </div>
                                 </div>
                             </details>
@@ -436,21 +439,37 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                                     <span class="text-sm font-semibold text-gray-800">Penjelasan Detail Metode Alokasi</span>
                                     <svg class="w-5 h-5 text-gray-500 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                 </summary>
-                                <div class="mt-2 pl-4 pr-2 pb-2 border-l-2 border-blue-300">
-                                    <ul class="list-disc list-inside pl-2 text-sm text-gray-700 space-y-3">
-                                        <li>
-                                            <strong>Per Batch Produksi (Paling Umum):</strong>
-                                            <p class="pl-4 mt-1">Pilih ini untuk biaya yang dipakai bersama oleh banyak produksi dalam sebulan. Ini adalah metode terbaik untuk Listrik, Air, Sewa, Gaji Admin, dan Penyusutan Aset. Sistem akan membagi total biaya dengan total produksi Anda.</p>
-                                        </li>
-                                        <li>
-                                            <strong>Per Unit Produk:</strong>
-                                            <p class="pl-4 mt-1">Pilih ini jika biaya berkaitan langsung dengan setiap unit produk yang dihasilkan. Contoh: Biaya royalti resep sebesar Rp 500 untuk setiap kue yang dibuat. Sistem akan mengalikan biaya ini dengan jumlah unit yang dihasilkan.</p>
-                                        </li>
-                                        <li>
-                                            <strong>Persentase dari Penjualan:</strong>
-                                            <p class="pl-4 mt-1">Pilih ini untuk biaya yang dihitung berdasarkan persentase dari harga jual. Contoh: Komisi untuk marketplace sebesar 5% dari harga jual produk.</p>
-                                        </li>
-                                    </ul>
+                                <div class="mt-2 pl-4 pr-2 pb-2 border-l-2 border-blue-300 space-y-4">
+                                    <div>
+                                        <strong class="block text-sm text-blue-700">Per Batch Produksi (paling umum)</strong>
+                                        <p class="pl-2 text-sm text-gray-700">
+                                            Cocok untuk biaya bulanan yang dipakai bersama.<br>
+                                            Misalnya: listrik, air, sewa, gaji admin, penyusutan alat.<br>
+                                            ➝ Sistem akan bagi biaya total dengan jumlah batch produksi.<br>
+                                            <span class="bg-yellow-100 px-1 rounded">Contoh:</span> Listrik Rp 150.000 sebulan. Bulan ini ada 50 batch produksi.<br>
+                                            Biaya listrik per batch = Rp 150.000 ÷ 50 = Rp 3.000.
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <strong class="block text-sm text-green-700">Per Unit Produk</strong>
+                                        <p class="pl-2 text-sm text-gray-700">
+                                            Cocok untuk biaya yang langsung habis per produk.<br>
+                                            Misalnya: gas, plastik, kemasan, bahan habis pakai kecil, royalti per produk.<br>
+                                            ➝ Sistem akan hitung biaya per unit.<br>
+                                            <span class="bg-yellow-100 px-1 rounded">Contoh:</span> 1 tabung gas Rp 22.000 bisa menghasilkan 100 unit produk.<br>
+                                            Biaya gas per unit = Rp 22.000 ÷ 100 = Rp 220.
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <strong class="block text-sm text-purple-700">Persentase dari Penjualan</strong>
+                                        <p class="pl-2 text-sm text-gray-700">
+                                            Cocok untuk biaya yang dihitung dari harga jual.<br>
+                                            Misalnya: komisi marketplace 5%, fee payment gateway 2%, biaya reseller.<br>
+                                            ➝ Sistem akan hitung otomatis dari harga jual.<br>
+                                            <span class="bg-yellow-100 px-1 rounded">Contoh:</span> Produk dijual Rp 50.000. Komisi marketplace 5%.<br>
+                                            Biaya komisi = Rp 50.000 × 5% = Rp 2.500 per unit.
+                                        </p>
+                                    </div>
                                 </div>
                             </details>
 
@@ -459,30 +478,58 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                                     <span class="text-sm font-semibold text-gray-800">Contoh Pengisian Biaya Overhead</span>
                                     <svg class="w-5 h-5 text-gray-500 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                 </summary>
-                                <div class="mt-2 pl-4 pr-2 pb-2 border-l-2 border-blue-300 space-y-3">
-                                    <div>
-                                        <strong class="block text-sm">• Biaya Habis Pakai (Contoh: Gas LPG):</strong>
-                                        <ul class="list-disc list-inside pl-4 text-sm text-gray-700">
-                                            <li><strong>Metode Alokasi:</strong> Per Batch Produksi.</li>
-                                            <li><strong>Jumlah Biaya Total:</strong> Harga beli 1 tabung gas (misal: 22000).</li>
-                                            <li><strong>Estimasi Pemakaian Total:</strong> Kira-kira 1 tabung itu bisa untuk berapa kali masak (misal: 30).</li>
-                                        </ul>
+                                <div class="mt-2 pl-4 pr-2 pb-2 border-l-2 border-blue-300 space-y-4">
+                                    <div class="bg-green-50 p-3 rounded-lg">
+                                        <strong class="block text-sm text-green-800 mb-2">Biaya Habis Pakai (Gas LPG, Plastik, dll)</strong>
+                                        <div class="text-sm text-gray-700 space-y-1">
+                                            <div><strong>Metode Alokasi:</strong> Per Unit Produk</div>
+                                            <div><strong>Jumlah Biaya Total:</strong> Harga 1 tabung gas (misal: Rp 22.000)</div>
+                                            <div><strong>Estimasi Pemakaian Total:</strong> 1 tabung gas bisa dipakai untuk 100 unit produk</div>
+                                            <div class="bg-white p-2 rounded border-l-4 border-green-400">
+                                                <strong>Hasil Perhitungan:</strong> Rp 22.000 ÷ 100 = Rp 220 per unit
+                                            </div>
+                                            <p class="text-xs text-green-700 mt-2">👉 Catatan: cocok untuk biaya yang habis mengikuti jumlah produk.</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <strong class="block text-sm">• Biaya Tagihan Bulanan (Listrik, Air, Sewa):</strong>
-                                        <ul class="list-disc list-inside pl-4 text-sm text-gray-700">
-                                            <li><strong>Metode Alokasi:</strong> Per Batch Produksi.</li>
-                                            <li><strong>Jumlah Biaya Total:</strong> Total tagihan bulan lalu (misal: Listrik Rp 150.000).</li>
-                                            <li><strong>Estimasi Pemakaian Total:</strong> Total semua batch produksi bulan lalu (misal: 50 kali masak).</li>
-                                        </ul>
+
+                                    <div class="bg-blue-50 p-3 rounded-lg">
+                                        <strong class="block text-sm text-blue-800 mb-2">Biaya Tagihan Bulanan (Listrik, Air, Sewa, Gaji Admin)</strong>
+                                        <div class="text-sm text-gray-700 space-y-1">
+                                            <div><strong>Metode Alokasi:</strong> Per Batch Produksi</div>
+                                            <div><strong>Jumlah Biaya Total:</strong> Tagihan bulan lalu (misal: Rp 150.000 listrik)</div>
+                                            <div><strong>Estimasi Pemakaian Total:</strong> Total batch produksi bulan lalu (misal: 50 batch masak)</div>
+                                            <div class="bg-white p-2 rounded border-l-4 border-blue-400">
+                                                <strong>Hasil Perhitungan:</strong> Rp 150.000 ÷ 50 = Rp 3.000 per batch
+                                            </div>
+                                            <p class="text-xs text-blue-700 mt-2">👉 Catatan: cocok untuk biaya yang sifatnya rutin bulanan & dipakai bersama-sama.</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <strong class="block text-sm">• Penyusutan Aset (Mixer, Oven, dll):</strong>
-                                        <ul class="list-disc list-inside pl-4 text-sm text-gray-700">
-                                            <li><strong>Metode Alokasi:</strong> Per Batch Produksi.</li>
-                                            <li><strong>Jumlah Biaya Total:</strong> Hitung dulu biaya per bulannya. Contoh: Mixer Rp 1.200.000 dipakai 2 tahun (24 bulan) = Rp 50.000/bulan. Masukkan `50000`.</li>
-                                            <li><strong>Estimasi Pemakaian Total:</strong> Gunakan total batch bulanan yang sama (misal: 50).</li>
-                                        </ul>
+
+                                    <div class="bg-purple-50 p-3 rounded-lg">
+                                        <strong class="block text-sm text-purple-800 mb-2">Penyusutan Aset (Mixer, Oven, Kompor, dll)</strong>
+                                        <div class="text-sm text-gray-700 space-y-1">
+                                            <div><strong>Metode Alokasi:</strong> Per Batch Produksi</div>
+                                            <div><strong>Jumlah Biaya Total:</strong> Hitung dulu biaya per bulan.<br>
+                                            Contoh: Mixer Rp 1.200.000, umur pakai 24 bulan → Rp 50.000/bulan.</div>
+                                            <div><strong>Estimasi Pemakaian Total:</strong> Total batch per bulan (misal: 50 batch)</div>
+                                            <div class="bg-white p-2 rounded border-l-4 border-purple-400">
+                                                <strong>Hasil Perhitungan:</strong> Rp 50.000 ÷ 50 = Rp 1.000 per batch
+                                            </div>
+                                            <p class="text-xs text-purple-700 mt-2">👉 Catatan: cocok untuk alat besar yang dipakai jangka panjang.</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="bg-orange-50 p-3 rounded-lg">
+                                        <strong class="block text-sm text-orange-800 mb-2">Biaya Berbasis Penjualan (Komisi Marketplace, Payment Fee, Royalti)</strong>
+                                        <div class="text-sm text-gray-700 space-y-1">
+                                            <div><strong>Metode Alokasi:</strong> Persentase dari Penjualan</div>
+                                            <div><strong>Jumlah Biaya Total:</strong> Tidak perlu isi manual (langsung dihitung sistem dari harga jual).</div>
+                                            <div><strong>Estimasi Pemakaian Total:</strong> Masukkan persentasenya (misal: 5%).</div>
+                                            <div class="bg-white p-2 rounded border-l-4 border-orange-400">
+                                                <strong>Hasil Perhitungan:</strong> Produk Rp 50.000 × 5% = Rp 2.500 per unit.
+                                            </div>
+                                            <p class="text-xs text-orange-700 mt-2">👉 Catatan: cocok untuk biaya yang selalu bergantung pada harga jual.</p>
+                                        </div>
                                     </div>
                                 </div>
                             </details>
