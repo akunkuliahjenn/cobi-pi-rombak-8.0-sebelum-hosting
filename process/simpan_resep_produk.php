@@ -222,8 +222,9 @@ try {
                         $finalAmount = $baseAmount;
                         break;
                     case 'per_unit':
-                        // Per unit dikali dengan production yield, dibagi estimated uses
-                        $finalAmount = ($baseAmount * $productionYield) / $estimatedUses;
+                        // Per unit: baseAmount dibagi dengan production yield, dibagi estimated uses
+                        // Contoh: 15.000 ÷ 20 unit ÷ 30x = 25 per unit per batch
+                        $finalAmount = $baseAmount / $productionYield / $estimatedUses;
                         break;
                     case 'per_hour':
                         // Per hour dikali dengan production time, dibagi estimated uses  
@@ -231,8 +232,8 @@ try {
                         break;
                     case 'per_batch':
                     default:
-                        // Per batch dibagi dengan estimated uses untuk mendapat biaya per batch
-                        // Contoh: Gas 22.000 / 200x = 110 per batch
+                        // Per batch: baseAmount dibagi dengan estimated uses
+                        // Contoh: Gas 22.000 ÷ 30x = 733.33 per batch
                         $finalAmount = $baseAmount / $estimatedUses;
                         break;
                 }
@@ -328,6 +329,23 @@ try {
                 $production_yield = $_POST['production_yield'] ?? 1;
                 $production_time_hours = $_POST['production_time_hours'] ?? 1;
                 $sale_price = $_POST['sale_price'] ?? 0;
+
+                // Update semua tenaga kerja manual yang terkait dengan produk ini
+                // agar total_cost-nya disesuaikan dengan waktu produksi yang baru
+                $stmtUpdateLabor = $conn->prepare("
+                    UPDATE product_labor_manual plm
+                    JOIN labor_costs lc ON plm.labor_id = lc.id
+                    SET plm.custom_hours = ?, 
+                        plm.total_cost = COALESCE(plm.custom_hourly_rate, lc.hourly_rate) * ?
+                    WHERE plm.product_id = ? AND plm.user_id = ? AND lc.user_id = ?
+                ");
+                $stmtUpdateLabor->execute([
+                    $production_time_hours, 
+                    $production_time_hours, 
+                    $product_id, 
+                    $_SESSION['user_id'], 
+                    $_SESSION['user_id']
+                ]);
 
                  // Hitung HPP terbaru setelah update info produk
                 $hppPerUnit = calculateHPPForProduct($conn, $product_id, $production_yield, $production_time_hours);

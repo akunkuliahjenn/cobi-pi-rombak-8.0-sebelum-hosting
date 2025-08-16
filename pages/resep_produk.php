@@ -207,32 +207,14 @@ try {
             $manualOverheadCosts = $stmtManualOverhead->fetchAll(PDO::FETCH_ASSOC);
 
             foreach ($manualOverheadCosts as $overhead) {
-                // Gunakan final_amount yang sudah tersimpan di database untuk card
-                $finalAmountForCard = $overhead['final_amount'] ?? 0;
+                // Gunakan final_amount yang sudah tersimpan di database (ini sudah cost per batch yang benar)
+                $finalAmountPerBatch = $overhead['final_amount'] ?? 0;
 
-                // Hitung final amount per unit untuk detail breakdown
-                $allocationMethod = $overhead['allocation_method'] ?? 'per_batch';
-                $estimatedUses = $overhead['estimated_uses'] ?? 1;
-                $finalAmountPerUnit = 0;
+                // Cost per unit = final_amount dibagi production_yield
+                $costPerUnit = $productionYield > 0 ? $finalAmountPerBatch / $productionYield : 0;
 
-                switch ($allocationMethod) {
-                    case 'percentage':
-                        $finalAmountPerUnit = $overhead['default_amount'];
-                        break;
-                    case 'per_unit':
-                        $finalAmountPerUnit = ($overhead['default_amount'] * $productionYield) / $estimatedUses;
-                        break;
-                    case 'per_hour':
-                        $finalAmountPerUnit = ($overhead['default_amount'] * $estimatedProductionTimeHours) / $estimatedUses;
-                        break;
-                    case 'per_batch':
-                    default:
-                        $finalAmountPerUnit = $overhead['default_amount'] / $estimatedUses;
-                        break;
-                }
-
-                // Untuk card biaya overhead, gunakan nilai asli dari database
-                $overheadCostPerBatch += $finalAmountForCard;
+                // Untuk total overhead cost per batch, gunakan final_amount
+                $overheadCostPerBatch += $finalAmountPerBatch;
 
                 $overheadDetails[] = [
                     'name' => $overhead['name'],
@@ -240,10 +222,11 @@ try {
                     'amount' => $overhead['custom_amount'] ?? $overhead['default_amount'],
                     'allocation_method' => $overhead['allocation_method'],
                     'description' => $overhead['description'],
-                    'cost_per_item' => $finalAmountPerUnit, // Untuk detail breakdown, gunakan nilai per unit
+                    'cost_per_batch' => $finalAmountPerBatch, // Cost per batch untuk perhitungan
+                    'cost_per_unit' => $costPerUnit, // Cost per unit untuk display (sudah benar)
                     'category' => 'overhead',
                     'manual_id' => $overhead['id'],
-                    'estimated_uses' => $estimatedUses
+                    'estimated_uses' => $overhead['estimated_uses'] ?? 1
                 ];
             }
 
@@ -767,12 +750,38 @@ try {
                                                     </div>
                                                     <div class="flex-1 text-center">
                                                         <span class="text-sm text-gray-600">
-                                                            <?php echo ucfirst(str_replace('_', ' ', $detail['allocation_method'])); ?>: 
-                                                            Rp <?php echo number_format($detail['cost_per_item'], 0, ',', '.'); ?> per unit
+                                                            <?php 
+                                                            // Tampilkan perhitungan detail berdasarkan allocation method
+                                                            $method = $detail['allocation_method'];
+                                                            $amount = $detail['amount'];
+                                                            $estimatedUses = $detail['estimated_uses'] ?? 1;
+                                                            $costPerBatch = $detail['cost_per_batch'];
+                                                            $costPerUnit = $detail['cost_per_unit'];
+                                                            
+                                                            switch ($method) {
+                                                                case 'percentage':
+                                                                    echo "Persentase: " . number_format($amount, 1) . "%";
+                                                                    break;
+                                                                case 'per_unit':
+                                                                    echo "Rp " . number_format($amount, 0, ',', '.') . " ÷ " . $hppCalculation['production_yield'] . " unit ÷ " . $estimatedUses . "x pakai";
+                                                                    break;
+                                                                case 'per_hour':
+                                                                    echo "Rp " . number_format($amount, 0, ',', '.') . " × " . number_format($hppCalculation['production_time_hours'], 1) . " jam ÷ " . $estimatedUses . "x pakai";
+                                                                    break;
+                                                                case 'per_batch':
+                                                                default:
+                                                                    echo "Rp " . number_format($amount, 0, ',', '.') . " ÷ " . $estimatedUses . "x pakai";
+                                                                    break;
+                                                            }
+                                                            ?>
+                                                            <br>
+                                                            <span class="text-xs text-gray-500">
+                                                                (= Rp <?php echo number_format($costPerBatch, 0, ',', '.'); ?> per batch = Rp <?php echo number_format($costPerUnit, 0, ',', '.'); ?> per unit)
+                                                            </span>
                                                         </span>
                                                     </div>
-                                                    <div class="flex-1 text-right flex items-center justify-end space-x-4">
-                                                        <span class="font-semibold text-gray-900 mr-4">Rp <?php echo number_format($detail['cost_per_item'], 0, ',', '.'); ?></span>
+                                                    <div class="flex-1 text-right flex items-center justify-end space-x-2">
+                                                        <span class="font-semibold text-gray-900">Rp <?php echo number_format($costPerUnit, 0, ',', '.'); ?></span>
                                                         <button onclick="deleteManualOverhead(<?php echo $detail['manual_id'] ?? 0; ?>)" class="px-2 py-1 text-xs font-medium text-red-600 bg-red-100 border border-red-300 rounded hover:bg-red-200 hover:border-red-400 transition-colors duration-200">
                                                             <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
