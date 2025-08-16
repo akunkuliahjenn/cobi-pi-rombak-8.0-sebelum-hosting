@@ -35,7 +35,7 @@ function calculateHPPForProduct($conn, $product_id, $production_yield = 1, $prod
 
     // 2. BIAYA TENAGA KERJA MANUAL dengan user isolation
     $stmtManualLabor = $conn->prepare("
-        SELECT plm.total_cost
+        SELECT plm.total_cost, lc.hourly_rate as default_hourly_rate, plm.custom_hours, plm.custom_hourly_rate, plm.id, lc.position_name
         FROM product_labor_manual plm
         JOIN labor_costs lc ON plm.labor_id = lc.id
         WHERE plm.product_id = ? AND plm.user_id = ? AND lc.user_id = ? AND lc.is_active = 1

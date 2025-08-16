@@ -312,7 +312,7 @@ try {
                                     </svg>
                                 <?php else: ?>
                                     <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
                                     </svg>
                                 <?php endif; ?>
                             </div>
@@ -386,7 +386,7 @@ try {
                             <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
                                 <h4 class="text-lg font-semibold text-blue-900 mb-4 flex items-center">
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                     </svg>
                                     Konfigurasi Info Produk
@@ -714,11 +714,15 @@ try {
                                                     </div>
                                                     <div class="flex-1 text-center">
                                                         <span class="text-sm text-gray-600">
-                                                            Rp <?php echo number_format($detail['hourly_rate'], 0, ',', '.'); ?>/jam × <?php echo $detail['production_time']; ?> jam
+                                                            Rp <?php echo number_format($detail['hourly_rate'], 0, ',', '.'); ?>/jam × <?php echo number_format($detail['production_time'], 1); ?> jam
+                                                            <br>
+                                                            <span class="text-xs text-gray-500">
+                                                                (Rp <?php echo number_format($detail['hourly_rate'], 0, ',', '.'); ?>/jam × <?php echo number_format($detail['production_time'], 1); ?> jam ÷ <?php echo $hppCalculation['production_yield']; ?> unit)
+                                                            </span>
                                                         </span>
                                                     </div>
                                                     <div class="flex-1 text-right flex items-center justify-end space-x-2">
-                                                        <span class="font-semibold text-gray-900">Rp <?php echo number_format($detail['cost_per_item'], 0, ',', '.'); ?></span>
+                                                        <span class="font-semibold text-gray-900">Rp <?php echo number_format($detail['cost_per_item'] / $hppCalculation['production_yield'], 0, ',', '.'); ?></span>
                                                         <button onclick="deleteManualLabor(<?php echo $detail['manual_id'] ?? 0; ?>)" class="px-2 py-1 text-xs font-medium text-red-600 bg-red-100 border border-red-300 rounded hover:bg-red-200 hover:border-red-400 transition-colors duration-200">
                                                             <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -752,33 +756,33 @@ try {
                                         <span class="text-sm text-gray-500">Hanya yang dipilih untuk produk ini</span>
                                     </div>
                                     <?php if (!empty($hppCalculation['overhead_details'])): ?>
-                                <div class="space-y-3">
-                                    <?php foreach ($hppCalculation['overhead_details'] as $detail): ?>
-                                        <div class="flex justify-between items-center p-3 bg-purple-50 rounded-lg border border-purple-200">
-                                            <div class="flex-1">
-                                                <span class="font-medium text-gray-900"><?php echo htmlspecialchars($detail['name']); ?></span>
-                                                <?php if ($detail['description']): ?>
-                                                    <p class="text-xs text-gray-500 mt-1"><?php echo htmlspecialchars($detail['description']); ?></p>
-                                                <?php endif; ?>
-                                            </div>
-                                            <div class="flex-1 text-center">
-                                                <span class="text-sm text-gray-600">
-                                                    <?php echo ucfirst(str_replace('_', ' ', $detail['allocation_method'])); ?>: 
-                                                    Rp <?php echo number_format($detail['cost_per_item'], 0, ',', '.'); ?> per unit
-                                                </span>
-                                            </div>
-                                            <div class="flex-1 text-right flex items-center justify-end space-x-4">
-                                                <span class="font-semibold text-gray-900 mr-4">Rp <?php echo number_format($detail['cost_per_item'], 0, ',', '.'); ?></span>
-                                                <button onclick="deleteManualOverhead(<?php echo $detail['manual_id'] ?? 0; ?>)" class="px-2 py-1 text-xs font-medium text-red-600 bg-red-100 border border-red-300 rounded hover:bg-red-200 hover:border-red-400 transition-colors duration-200">
-                                                    <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                                    </svg>
-                                                    Hapus
-                                                </button>
-                                            </div>
+                                        <div class="space-y-3">
+                                            <?php foreach ($hppCalculation['overhead_details'] as $detail): ?>
+                                                <div class="flex justify-between items-center p-3 bg-purple-50 rounded-lg border border-purple-200">
+                                                    <div class="flex-1">
+                                                        <span class="font-medium text-gray-900"><?php echo htmlspecialchars($detail['name']); ?></span>
+                                                        <?php if ($detail['description']): ?>
+                                                            <p class="text-xs text-gray-500 mt-1"><?php echo htmlspecialchars($detail['description']); ?></p>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                    <div class="flex-1 text-center">
+                                                        <span class="text-sm text-gray-600">
+                                                            <?php echo ucfirst(str_replace('_', ' ', $detail['allocation_method'])); ?>: 
+                                                            Rp <?php echo number_format($detail['cost_per_item'], 0, ',', '.'); ?> per unit
+                                                        </span>
+                                                    </div>
+                                                    <div class="flex-1 text-right flex items-center justify-end space-x-4">
+                                                        <span class="font-semibold text-gray-900 mr-4">Rp <?php echo number_format($detail['cost_per_item'], 0, ',', '.'); ?></span>
+                                                        <button onclick="deleteManualOverhead(<?php echo $detail['manual_id'] ?? 0; ?>)" class="px-2 py-1 text-xs font-medium text-red-600 bg-red-100 border border-red-300 rounded hover:bg-red-200 hover:border-red-400 transition-colors duration-200">
+                                                            <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                            </svg>
+                                                            Hapus
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            <?php endforeach; ?>
                                         </div>
-                                    <?php endforeach; ?>
-                                </div>
                                     <?php else: ?>
                                         <div class="text-center py-8">
                                             <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
