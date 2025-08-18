@@ -27,11 +27,23 @@ try {
             $allocation_method = trim($_POST['allocation_method'] ?? 'per_batch');
             $estimated_uses = (int) ($_POST['estimated_uses'] ?? 1);
 
-            // Validasi dasar
-            if (empty($name) || $amount <= 0 || $estimated_uses <= 0) {
-                $_SESSION['overhead_message'] = ['text' => 'Nama, jumlah biaya, dan estimasi pemakaian harus diisi dengan benar.', 'type' => 'error'];
+            // Validasi dasar - untuk metode persentase, amount boleh kosong
+            if (empty($name) || $estimated_uses <= 0) {
+                $_SESSION['overhead_message'] = ['text' => 'Nama dan estimasi pemakaian harus diisi dengan benar.', 'type' => 'error'];
                 header("Location: /cornerbites-sia/pages/overhead_management.php");
                 exit();
+            }
+
+            // Validasi amount khusus berdasarkan metode
+            if ($allocation_method !== 'percentage' && $amount <= 0) {
+                $_SESSION['overhead_message'] = ['text' => 'Jumlah biaya harus diisi untuk metode alokasi selain persentase.', 'type' => 'error'];
+                header("Location: /cornerbites-sia/pages/overhead_management.php");
+                exit();
+            }
+
+            // Untuk metode persentase, jika amount kosong, set ke 0
+            if ($allocation_method === 'percentage' && $amount <= 0) {
+                $amount = 0;
             }
 
             // Validasi duplikasi nama overhead dengan estimasi pemakaian yang sama

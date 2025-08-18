@@ -488,7 +488,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                                             <div class="bg-white p-2 rounded border-l-4 border-green-400">
                                                 <strong>Hasil Perhitungan:</strong> Rp 22.000 ÷ 100 = Rp 220 per unit
                                             </div>
-                                            <p class="text-xs text-green-700 mt-2">👉 Catatan: cocok untuk biaya yang habis mengikuti jumlah produk.</p>
+                                            <p class="text-xs text-green-700 mt-2">Catatan: cocok untuk biaya yang habis mengikuti jumlah produk.</p>
                                         </div>
                                     </div>
 
@@ -501,7 +501,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                                             <div class="bg-white p-2 rounded border-l-4 border-blue-400">
                                                 <strong>Hasil Perhitungan:</strong> Rp 150.000 ÷ 50 = Rp 3.000 per batch
                                             </div>
-                                            <p class="text-xs text-blue-700 mt-2">👉 Catatan: cocok untuk biaya yang sifatnya rutin bulanan & dipakai bersama-sama.</p>
+                                            <p class="text-xs text-blue-700 mt-2">Catatan: cocok untuk biaya yang sifatnya rutin bulanan & dipakai bersama-sama.</p>
                                         </div>
                                     </div>
 
@@ -515,7 +515,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                                             <div class="bg-white p-2 rounded border-l-4 border-purple-400">
                                                 <strong>Hasil Perhitungan:</strong> Rp 50.000 ÷ 50 = Rp 1.000 per batch
                                             </div>
-                                            <p class="text-xs text-purple-700 mt-2">👉 Catatan: cocok untuk alat besar yang dipakai jangka panjang.</p>
+                                            <p class="text-xs text-purple-700 mt-2">Catatan: cocok untuk alat besar yang dipakai jangka panjang.</p>
                                         </div>
                                     </div>
 
@@ -523,12 +523,12 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                                         <strong class="block text-sm text-orange-800 mb-2">Biaya Berbasis Penjualan (Komisi Marketplace, Payment Fee, Royalti)</strong>
                                         <div class="text-sm text-gray-700 space-y-1">
                                             <div><strong>Metode Alokasi:</strong> Persentase dari Penjualan</div>
-                                            <div><strong>Jumlah Biaya Total:</strong> Tidak perlu isi manual (langsung dihitung sistem dari harga jual).</div>
-                                            <div><strong>Estimasi Pemakaian Total:</strong> Masukkan persentasenya (misal: 5%).</div>
+                                            <div><strong>Jumlah Biaya Total:</strong> Boleh dikosongkan (langsung dihitung sistem dari harga jual).</div>
+                                            <div><strong>Estimasi Pemakaian Total:</strong> Masukkan persentasenya (misal: 5 untuk 5%).</div>
                                             <div class="bg-white p-2 rounded border-l-4 border-orange-400">
                                                 <strong>Hasil Perhitungan:</strong> Produk Rp 50.000 × 5% = Rp 2.500 per unit.
                                             </div>
-                                            <p class="text-xs text-orange-700 mt-2">👉 Catatan: cocok untuk biaya yang selalu bergantung pada harga jual.</p>
+                                            <p class="text-xs text-orange-700 mt-2">Catatan: cocok untuk biaya yang selalu bergantung pada harga jual. Field biaya total bisa dikosongkan.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -548,7 +548,10 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                                 </div>
 
                                 <div>
-                                    <label for="overhead_amount" class="block text-sm font-semibold text-gray-700 mb-2">Jumlah Biaya Total</label>
+                                    <label for="overhead_amount" class="block text-sm font-semibold text-gray-700 mb-2">
+                                        Jumlah Biaya Total
+                                        <span id="amount_optional_label" class="text-sm text-gray-500 font-normal" style="display:none;">(Opsional untuk metode persentase)</span>
+                                    </label>
                                     <div class="relative">
                                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                             <span class="text-gray-500 text-sm font-medium">Rp</span>
@@ -557,7 +560,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                                                class="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
                                                placeholder="500000" required>
                                     </div>
-                                    <p class="text-xs text-gray-500 mt-1">Masukkan total biaya dari item ini (contoh: harga 1 tabung gas, atau total tagihan listrik 1 bulan).</p>
+                                    <p class="text-xs text-gray-500 mt-1" id="amount_help_text">Masukkan total biaya dari item ini (contoh: harga 1 tabung gas, atau total tagihan listrik 1 bulan).</p>
+                                    <p class="text-xs text-blue-600 mt-1" id="amount_help_percentage" style="display:none;">Untuk metode persentase, field ini bisa dikosongkan. Sistem akan menghitung otomatis dari harga jual produk.</p>
                                 </div>
 
                                 <div>
@@ -577,9 +581,16 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'labor') {
                                 </div>
 
                                 <div class="mb-4">
-                                    <label for="estimated_uses" class="block text-sm font-medium text-gray-700 mb-2">Estimasi Pemakaian Total</label>
-                                    <input type="number" id="estimated_uses" name="estimated_uses" min="1" step="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Contoh: 30 (untuk 30 kali pakai)" required>
-                                    <p class="text-xs text-gray-500 mt-1">Biaya ini bisa untuk berapa kali produksi? (contoh: Gas LPG untuk 30 kali masak)</p>
+                                    <label for="estimated_uses" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Estimasi Pemakaian Total 
+                                        <span id="estimated_uses_unit_label" class="text-blue-600 font-medium">(dalam batch)</span>
+                                    </label>
+                                    <input type="number" id="estimated_uses" name="estimated_uses" min="1" step="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="30" required>
+                                    <p class="text-xs text-gray-500 mt-1" id="estimated_uses_help">
+                                        <span id="estimated_uses_help_per_batch">Biaya ini bisa untuk berapa batch produksi? (contoh: Gas LPG untuk 30 batch masak)</span>
+                                        <span id="estimated_uses_help_per_unit" style="display:none;">Biaya ini bisa menghasilkan berapa unit produk? (contoh: 1 tabung gas untuk 200 unit kue)</span>
+                                        <span id="estimated_uses_help_percentage" style="display:none;">Berapa persen dari harga jual? (contoh: komisi marketplace 5%)</span>
+                                    </p>
                                 </div>
                             </div>
 
@@ -939,7 +950,75 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Set up limit change handlers
     setupLimitHandlers();
+
+    // Set up allocation method change handler
+    setupAllocationMethodHandler();
 });
+
+function setupAllocationMethodHandler() {
+    const allocationMethodSelect = document.getElementById('allocation_method');
+    const estimatedUsesInput = document.getElementById('estimated_uses');
+    const estimatedUsesLabel = document.getElementById('estimated_uses_unit_label');
+    const estimatedUsesHelpPerBatch = document.getElementById('estimated_uses_help_per_batch');
+    const estimatedUsesHelpPerUnit = document.getElementById('estimated_uses_help_per_unit');
+    const estimatedUsesHelpPercentage = document.getElementById('estimated_uses_help_percentage');
+    
+    // Elements untuk amount field
+    const amountInput = document.getElementById('overhead_amount');
+    const amountOptionalLabel = document.getElementById('amount_optional_label');
+    const amountHelpText = document.getElementById('amount_help_text');
+    const amountHelpPercentage = document.getElementById('amount_help_percentage');
+
+    function updateFormBasedOnMethod(method) {
+        // Hide all help texts first
+        estimatedUsesHelpPerBatch.style.display = 'none';
+        estimatedUsesHelpPerUnit.style.display = 'none';
+        estimatedUsesHelpPercentage.style.display = 'none';
+        amountOptionalLabel.style.display = 'none';
+        amountHelpText.style.display = 'block';
+        amountHelpPercentage.style.display = 'none';
+        
+        switch (method) {
+            case 'per_unit':
+                estimatedUsesLabel.textContent = '(dalam unit produk)';
+                estimatedUsesInput.placeholder = '200';
+                estimatedUsesHelpPerUnit.style.display = 'inline';
+                amountInput.required = true;
+                break;
+            case 'percentage':
+                estimatedUsesLabel.textContent = '(dalam persen %)';
+                estimatedUsesInput.placeholder = '5';
+                estimatedUsesInput.max = '100';
+                estimatedUsesHelpPercentage.style.display = 'inline';
+                // Untuk metode persentase, amount tidak wajib
+                amountInput.required = false;
+                amountOptionalLabel.style.display = 'inline';
+                amountHelpText.style.display = 'none';
+                amountHelpPercentage.style.display = 'block';
+                break;
+            case 'per_batch':
+            default:
+                estimatedUsesLabel.textContent = '(dalam batch)';
+                estimatedUsesInput.placeholder = '30';
+                estimatedUsesInput.removeAttribute('max');
+                estimatedUsesHelpPerBatch.style.display = 'inline';
+                amountInput.required = true;
+                break;
+        }
+    }
+
+    if (allocationMethodSelect) {
+        allocationMethodSelect.addEventListener('change', function() {
+            updateFormBasedOnMethod(this.value);
+        });
+        
+        // Trigger initial update based on current value
+        updateFormBasedOnMethod(allocationMethodSelect.value);
+    }
+    
+    // Make function globally accessible for edit mode
+    window.updateFormBasedOnMethod = updateFormBasedOnMethod;
+}
 
 function setupSearchHandlers() {
     const overheadSearch = document.getElementById('search-overhead-input');

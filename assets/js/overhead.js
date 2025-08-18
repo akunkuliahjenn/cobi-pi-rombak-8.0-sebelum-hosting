@@ -67,6 +67,11 @@ function resetOverheadForm() {
         Tambah Overhead
     `;
     document.getElementById('overhead_cancel_edit_button').classList.add('hidden');
+
+    // Reset form labels and help text to default (per_batch)
+    if (window.updateFormBasedOnMethod) {
+        window.updateFormBasedOnMethod('per_batch');
+    }
 }
 
 // Reset form labor
@@ -110,6 +115,11 @@ function editOverhead(overhead) {
         Update Overhead
     `;
     document.getElementById('overhead_cancel_edit_button').classList.remove('hidden');
+
+    // Update form labels and help text based on allocation method
+    if (window.updateFormBasedOnMethod) {
+        window.updateFormBasedOnMethod(overhead.allocation_method || 'per_batch');
+    }
 
     // Scroll ke form agar terlihat oleh pengguna
     document.getElementById('overhead_form_title').scrollIntoView({ behavior: 'smooth', block: 'center' });

@@ -50,7 +50,7 @@ function calculateHPPForProduct($conn, $product_id, $production_yield = 1, $prod
 
     // 3. BIAYA OVERHEAD MANUAL dengan user isolation
     $stmtManualOverhead = $conn->prepare("
-        SELECT pom.final_amount, oc.allocation_method
+        SELECT pom.final_amount, oc.allocation_method, oc.amount, oc.estimated_uses
         FROM product_overhead_manual pom
         JOIN overhead_costs oc ON pom.overhead_id = oc.id
         WHERE pom.product_id = ? AND pom.user_id = ? AND oc.user_id = ? AND oc.is_active = 1
@@ -58,23 +58,51 @@ function calculateHPPForProduct($conn, $product_id, $production_yield = 1, $prod
     $stmtManualOverhead->execute([$product_id, $_SESSION['user_id'], $_SESSION['user_id']]);
     $manualOverheadCosts = $stmtManualOverhead->fetchAll(PDO::FETCH_ASSOC);
 
+    // Dapatkan harga jual produk untuk perhitungan persentase
+    $stmtSalePrice = $conn->prepare("SELECT sale_price FROM products WHERE id = ? AND user_id = ?");
+    $stmtSalePrice->execute([$product_id, $_SESSION['user_id']]);
+    $salePrice = $stmtSalePrice->fetchColumn() ?: 0;
+
     $overheadCostPerBatch = 0;
     foreach ($manualOverheadCosts as $overhead) {
         $finalAmount = $overhead['final_amount'];
         $allocationMethod = $overhead['allocation_method'] ?? 'per_batch';
         
-        // Untuk per_unit, kalikan dengan production yield untuk mendapatkan total cost per batch
-        if ($allocationMethod === 'per_unit') {
-            $overheadCostPerBatch += $finalAmount * $production_yield;
-        } else {
-            // Untuk per_batch, per_hour, percentage - gunakan langsung final_amount
-            $overheadCostPerBatch += $finalAmount;
+        switch ($allocationMethod) {
+            case 'percentage':
+                // Untuk metode persentase, hitung ulang berdasarkan harga jual saat ini
+                if ($salePrice > 0) {
+                    $percentage = $overhead['amount'] > 0 ? $overhead['amount'] : $overhead['estimated_uses'];
+                    $percentageCost = ($salePrice * $percentage) / 100;
+                    $overheadCostPerBatch += $percentageCost * $production_yield;
+                } else {
+                    $overheadCostPerBatch += $finalAmount;
+                }
+                break;
+            case 'per_unit':
+                // Untuk per_unit, final_amount sudah dalam bentuk per unit, kalikan dengan production yield
+                $overheadCostPerBatch += $finalAmount * $production_yield;
+                break;
+            default:
+                // Untuk per_batch, per_hour - gunakan langsung final_amount
+                $overheadCostPerBatch += $finalAmount;
+                break;
         }
     }
 
     // 4. TOTAL HPP
     $totalCostPerBatch = $totalBahanBaku + $laborCostPerBatch + $overheadCostPerBatch;
     $hppPerUnit = $production_yield > 0 ? $totalCostPerBatch / $production_yield : 0;
+
+    // Debug log untuk memverifikasi perhitungan HPP
+    error_log("HPP Calculation Debug for Product ID: " . $product_id);
+    error_log("- Total Bahan Baku: " . $totalBahanBaku);
+    error_log("- Labor Cost Per Batch: " . $laborCostPerBatch);
+    error_log("- Overhead Cost Per Batch: " . $overheadCostPerBatch);
+    error_log("- Total Cost Per Batch: " . $totalCostPerBatch);
+    error_log("- Production Yield: " . $production_yield);
+    error_log("- Production Time Hours: " . $production_time_hours);
+    error_log("- Final HPP Per Unit: " . $hppPerUnit);
 
     return $hppPerUnit;
 }
@@ -211,12 +239,13 @@ try {
                 $overhead = $overheadStmt->fetch(PDO::FETCH_ASSOC);
                 if (!$overhead) { throw new Exception('Data overhead tidak ditemukan.'); }
 
-                $productStmt = $conn->prepare("SELECT production_yield, production_time_hours FROM products WHERE id = ?");
+                $productStmt = $conn->prepare("SELECT production_yield, production_time_hours, sale_price FROM products WHERE id = ?");
                 $productStmt->execute([$product_id]);
                 $product = $productStmt->fetch(PDO::FETCH_ASSOC);
 
                 $productionYield = $product['production_yield'] ?? 1;
                 $productionTimeHours = $product['production_time_hours'] ?? 1;
+                $salePrice = $product['sale_price'] ?? 0;
 
                 // Calculate final amount based on allocation method and estimated uses
                 $finalAmount = 0;
@@ -226,12 +255,24 @@ try {
 
                 switch ($allocationMethod) {
                     case 'percentage':
-                        // Untuk percentage, gunakan langsung amount sebagai persentase
-                        $finalAmount = $baseAmount;
+                        // Untuk metode persentase, hitung berdasarkan harga jual produk
+                        if ($salePrice > 0) {
+                            // Jika baseAmount > 0, gunakan sebagai persentase tetap
+                            if ($baseAmount > 0) {
+                                $percentage = $baseAmount;
+                            } else {
+                                // Jika baseAmount = 0, gunakan estimatedUses sebagai persentase
+                                $percentage = $estimatedUses;
+                            }
+                            $finalAmount = ($salePrice * $percentage) / 100;
+                        } else {
+                            // Jika belum ada harga jual, simpan sementara dengan nilai 0
+                            $finalAmount = 0;
+                        }
                         break;
                     case 'per_unit':
-                        // Per unit: baseAmount dibagi estimated uses (ini adalah cost per unit)
-                        // Contoh: Gas 22.000 ÷ 1x pakai = 22.000 per unit
+                        // Per unit: baseAmount dibagi estimated uses = cost per unit
+                        // Contoh: Gas 22.000 untuk 100 unit = 22.000 ÷ 100 = 220 per unit
                         $finalAmount = $baseAmount / $estimatedUses;
                         break;
                     case 'per_hour':
@@ -252,6 +293,7 @@ try {
                 error_log("- Base Amount: " . $baseAmount);
                 error_log("- Allocation Method: " . $allocationMethod);
                 error_log("- Estimated Uses: " . $estimatedUses);
+                error_log("- Sale Price: " . $salePrice);
                 error_log("- Production Yield: " . $productionYield);
                 error_log("- Production Time Hours: " . $productionTimeHours);
                 error_log("- Final Amount Calculated: " . $finalAmount);
@@ -269,7 +311,6 @@ try {
                     $updateStmt = $conn->prepare("UPDATE products SET cost_price = ? WHERE id = ?");
                     $updateStmt->execute([$hppPerUnit, $product_id]);
                 }
-
 
                 $_SESSION['resep_message'] = ['text' => 'Overhead berhasil ditambahkan ke resep.', 'type' => 'success'];
                 break;
@@ -350,6 +391,28 @@ try {
                 $stmtUpdateLabor->execute([
                     $production_time_hours, 
                     $production_time_hours, 
+                    $product_id, 
+                    $_SESSION['user_id'], 
+                    $_SESSION['user_id']
+                ]);
+
+                // Update overhead dengan metode persentase jika ada perubahan harga jual
+                $stmtUpdateOverheadPercentage = $conn->prepare("
+                    UPDATE product_overhead_manual pom
+                    JOIN overhead_costs oc ON pom.overhead_id = oc.id
+                    SET pom.final_amount = CASE 
+                        WHEN oc.allocation_method = 'percentage' AND ? > 0 THEN
+                            (? * CASE 
+                                WHEN oc.amount > 0 THEN oc.amount 
+                                ELSE oc.estimated_uses 
+                            END) / 100
+                        ELSE pom.final_amount
+                    END
+                    WHERE pom.product_id = ? AND pom.user_id = ? AND oc.user_id = ?
+                ");
+                $stmtUpdateOverheadPercentage->execute([
+                    $sale_price, 
+                    $sale_price, 
                     $product_id, 
                     $_SESSION['user_id'], 
                     $_SESSION['user_id']

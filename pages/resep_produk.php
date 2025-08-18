@@ -207,14 +207,21 @@ try {
             $manualOverheadCosts = $stmtManualOverhead->fetchAll(PDO::FETCH_ASSOC);
 
             foreach ($manualOverheadCosts as $overhead) {
-                // Gunakan final_amount yang sudah tersimpan di database (ini sudah cost per batch yang benar)
-                $finalAmountPerBatch = $overhead['final_amount'] ?? 0;
+                $finalAmount = $overhead['final_amount'] ?? 0;
+                $allocationMethod = $overhead['allocation_method'] ?? 'per_batch';
 
-                // Cost per unit = final_amount dibagi production_yield
-                $costPerUnit = $productionYield > 0 ? $finalAmountPerBatch / $productionYield : 0;
+                // Hitung cost per batch dan per unit berdasarkan allocation method
+                if ($allocationMethod === 'per_unit') {
+                    // Untuk per_unit: final_amount = cost per unit, jadi cost per batch = final_amount * production_yield
+                    $costPerUnit = $finalAmount;
+                    $costPerBatch = $finalAmount * $productionYield;
+                } else {
+                    // Untuk per_batch, percentage, per_hour: final_amount = cost per batch
+                    $costPerBatch = $finalAmount;
+                    $costPerUnit = $productionYield > 0 ? $finalAmount / $productionYield : 0;
+                }
 
-                // Untuk total overhead cost per batch, gunakan final_amount
-                $overheadCostPerBatch += $finalAmountPerBatch;
+                $overheadCostPerBatch += $costPerBatch;
 
                 $overheadDetails[] = [
                     'name' => $overhead['name'],
@@ -222,8 +229,8 @@ try {
                     'amount' => $overhead['custom_amount'] ?? $overhead['default_amount'],
                     'allocation_method' => $overhead['allocation_method'],
                     'description' => $overhead['description'],
-                    'cost_per_batch' => $finalAmountPerBatch, // Cost per batch untuk perhitungan
-                    'cost_per_unit' => $costPerUnit, // Cost per unit untuk display (sudah benar)
+                    'cost_per_batch' => $costPerBatch,
+                    'cost_per_unit' => $costPerUnit,
                     'category' => 'overhead',
                     'manual_id' => $overhead['id'],
                     'estimated_uses' => $overhead['estimated_uses'] ?? 1
@@ -761,22 +768,26 @@ try {
                                                             switch ($method) {
                                                                 case 'percentage':
                                                                     echo "Persentase: " . number_format($amount, 1) . "%";
+                                                                    echo "<br><span class='text-xs text-gray-500'>dari harga jual produk</span>";
                                                                     break;
                                                                 case 'per_unit':
-                                                                    echo "Rp " . number_format($amount, 0, ',', '.') . " ÷ " . $hppCalculation['production_yield'] . " unit ÷ " . $estimatedUses . "x pakai";
+                                                                    echo "Rp " . number_format($amount, 0, ',', '.') . " ÷ " . number_format($estimatedUses, 0, ',', '.') . " unit";
+                                                                    echo "<br><span class='text-xs text-gray-500'>Total biaya untuk " . number_format($estimatedUses, 0, ',', '.') . " unit produk</span>";
                                                                     break;
                                                                 case 'per_hour':
-                                                                    echo "Rp " . number_format($amount, 0, ',', '.') . " × " . number_format($hppCalculation['production_time_hours'], 1) . " jam ÷ " . $estimatedUses . "x pakai";
+                                                                    echo "Rp " . number_format($amount, 0, ',', '.') . " × " . number_format($hppCalculation['production_time_hours'], 1) . " jam ÷ " . $estimatedUses . " batch";
+                                                                    echo "<br><span class='text-xs text-gray-500'>Biaya per jam × waktu produksi ÷ estimasi batch</span>";
                                                                     break;
                                                                 case 'per_batch':
                                                                 default:
-                                                                    echo "Rp " . number_format($amount, 0, ',', '.') . " ÷ " . $estimatedUses . "x pakai";
+                                                                    echo "Rp " . number_format($amount, 0, ',', '.') . " ÷ " . number_format($estimatedUses, 0, ',', '.') . " batch";
+                                                                    echo "<br><span class='text-xs text-gray-500'>Total biaya untuk " . number_format($estimatedUses, 0, ',', '.') . " batch produksi</span>";
                                                                     break;
                                                             }
                                                             ?>
                                                             <br>
-                                                            <span class="text-xs text-gray-500">
-                                                                (= Rp <?php echo number_format($costPerBatch, 0, ',', '.'); ?> per batch = Rp <?php echo number_format($costPerUnit, 0, ',', '.'); ?> per unit)
+                                                            <span class="text-xs text-gray-500 font-medium mt-1 block">
+                                                                = Rp <?php echo number_format($costPerBatch, 0, ',', '.'); ?> per batch = Rp <?php echo number_format($costPerUnit, 0, ',', '.'); ?> per unit
                                                             </span>
                                                         </span>
                                                     </div>
