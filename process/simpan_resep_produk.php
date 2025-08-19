@@ -61,23 +61,18 @@ function calculateHPPForProduct($conn, $product_id, $production_yield = 1, $prod
     // Dapatkan harga jual produk untuk perhitungan persentase
     $stmtSalePrice = $conn->prepare("SELECT sale_price FROM products WHERE id = ? AND user_id = ?");
     $stmtSalePrice->execute([$product_id, $_SESSION['user_id']]);
-    $salePrice = $stmtSalePrice->fetchColumn() ?: 0;
+    $currentSalePrice = $stmtSalePrice->fetchColumn() ?: 0;
 
     $overheadCostPerBatch = 0;
     foreach ($manualOverheadCosts as $overhead) {
         $finalAmount = $overhead['final_amount'];
         $allocationMethod = $overhead['allocation_method'] ?? 'per_batch';
-        
+
         switch ($allocationMethod) {
             case 'percentage':
-                // Untuk metode persentase, hitung ulang berdasarkan harga jual saat ini
-                if ($salePrice > 0) {
-                    $percentage = $overhead['amount'] > 0 ? $overhead['amount'] : $overhead['estimated_uses'];
-                    $percentageCost = ($salePrice * $percentage) / 100;
-                    $overheadCostPerBatch += $percentageCost * $production_yield;
-                } else {
-                    $overheadCostPerBatch += $finalAmount;
-                }
+                // Untuk metode persentase, gunakan base amount yang sudah tersimpan (bukan recalculate)
+                // Ini mencegah circular dependency
+                $overheadCostPerBatch += $finalAmount;
                 break;
             case 'per_unit':
                 // Untuk per_unit, final_amount sudah dalam bentuk per unit, kalikan dengan production yield
@@ -254,35 +249,30 @@ try {
                 $baseAmount = $overhead['amount'];
 
                 switch ($allocationMethod) {
-                    case 'percentage':
-                        // Untuk metode persentase, hitung berdasarkan harga jual produk
-                        if ($salePrice > 0) {
-                            // Jika baseAmount > 0, gunakan sebagai persentase tetap
-                            if ($baseAmount > 0) {
-                                $percentage = $baseAmount;
-                            } else {
-                                // Jika baseAmount = 0, gunakan estimatedUses sebagai persentase
-                                $percentage = $estimatedUses;
-                            }
-                            $finalAmount = ($salePrice * $percentage) / 100;
-                        } else {
-                            // Jika belum ada harga jual, simpan sementara dengan nilai 0
-                            $finalAmount = 0;
-                        }
-                        break;
                     case 'per_unit':
-                        // Per unit: baseAmount dibagi estimated uses = cost per unit
-                        // Contoh: Gas 22.000 untuk 100 unit = 22.000 ÷ 100 = 220 per unit
                         $finalAmount = $baseAmount / $estimatedUses;
                         break;
                     case 'per_hour':
-                        // Per hour dikali dengan production time, dibagi estimated uses  
                         $finalAmount = ($baseAmount * $productionTimeHours) / $estimatedUses;
+                        break;
+                    case 'percentage':
+                        // Untuk metode persentase, hitung berdasarkan base HPP (tanpa overhead persentase)
+                        // Untuk mencegah circular dependency
+                        $baseHPP = $materialCostPerBatch + $laborCostPerBatch;
+                        $baseHPPPerUnit = $baseHPP / $productionYield;
+                        
+                        if ($baseHPPPerUnit > 0) {
+                            // Gunakan base HPP sebagai dasar perhitungan persentase
+                            $percentage = $baseAmount > 0 ? $baseAmount : $estimatedUses;
+                            $targetMargin = $percentage / 100;
+                            $targetSalePrice = $baseHPPPerUnit / (1 - $targetMargin);
+                            $finalAmount = ($targetSalePrice * $percentage) / 100;
+                        } else {
+                            $finalAmount = 0;
+                        }
                         break;
                     case 'per_batch':
                     default:
-                        // Per batch: baseAmount dibagi estimated uses (ini adalah cost per batch)
-                        // Contoh: Listrik 300.000 ÷ 20x pakai = 15.000 per batch
                         $finalAmount = $baseAmount / $estimatedUses;
                         break;
                 }
@@ -396,27 +386,34 @@ try {
                     $_SESSION['user_id']
                 ]);
 
-                // Update overhead dengan metode persentase jika ada perubahan harga jual
-                $stmtUpdateOverheadPercentage = $conn->prepare("
-                    UPDATE product_overhead_manual pom
-                    JOIN overhead_costs oc ON pom.overhead_id = oc.id
-                    SET pom.final_amount = CASE 
-                        WHEN oc.allocation_method = 'percentage' AND ? > 0 THEN
-                            (? * CASE 
-                                WHEN oc.amount > 0 THEN oc.amount 
-                                ELSE oc.estimated_uses 
-                            END) / 100
-                        ELSE pom.final_amount
-                    END
-                    WHERE pom.product_id = ? AND pom.user_id = ? AND oc.user_id = ?
-                ");
-                $stmtUpdateOverheadPercentage->execute([
-                    $sale_price, 
-                    $sale_price, 
-                    $product_id, 
-                    $_SESSION['user_id'], 
-                    $_SESSION['user_id']
-                ]);
+                // Update overhead dengan metode persentase hanya jika harga jual benar-benar berubah
+                $stmtCheckCurrentPrice = $conn->prepare("SELECT sale_price FROM products WHERE id = ? AND user_id = ?");
+                $stmtCheckCurrentPrice->execute([$product_id, $_SESSION['user_id']]);
+                $oldSalePrice = $stmtCheckCurrentPrice->fetchColumn() ?: 0;
+                
+                // Hanya update jika harga jual berbeda signifikan (lebih dari Rp 1)
+                if (abs($sale_price - $oldSalePrice) > 1) {
+                    $stmtUpdateOverheadPercentage = $conn->prepare("
+                        UPDATE product_overhead_manual pom
+                        JOIN overhead_costs oc ON pom.overhead_id = oc.id
+                        SET pom.final_amount = CASE 
+                            WHEN oc.allocation_method = 'percentage' AND ? > 0 THEN
+                                (? * CASE 
+                                    WHEN oc.amount > 0 THEN oc.amount 
+                                    ELSE oc.estimated_uses 
+                                END) / 100
+                            ELSE pom.final_amount
+                        END
+                        WHERE pom.product_id = ? AND pom.user_id = ? AND oc.user_id = ?
+                    ");
+                    $stmtUpdateOverheadPercentage->execute([
+                        $sale_price, 
+                        $sale_price, 
+                        $product_id, 
+                        $_SESSION['user_id'], 
+                        $_SESSION['user_id']
+                    ]);
+                }
 
                  // Hitung HPP terbaru setelah update info produk
                 $hppPerUnit = calculateHPPForProduct($conn, $product_id, $production_yield, $production_time_hours);

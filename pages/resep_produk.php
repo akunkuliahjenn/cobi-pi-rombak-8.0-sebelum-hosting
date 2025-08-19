@@ -197,7 +197,9 @@ try {
 
             // Ambil overhead manual yang sudah dipilih untuk produk ini dengan user isolation
             $stmtManualOverhead = $conn->prepare("
-                SELECT pom.*, oc.name, oc.description, oc.allocation_method, oc.amount as default_amount, oc.estimated_uses, pom.final_amount
+                SELECT pom.*, oc.name, COALESCE(oc.description, '') as description, oc.allocation_method, 
+                       COALESCE(oc.amount, 0) as default_amount, COALESCE(oc.estimated_uses, 1) as estimated_uses, 
+                       pom.final_amount, pom.custom_amount
                 FROM product_overhead_manual pom
                 JOIN overhead_costs oc ON pom.overhead_id = oc.id
                 WHERE pom.product_id = ? AND pom.user_id = ? AND oc.user_id = ? AND oc.is_active = 1
@@ -209,14 +211,28 @@ try {
             foreach ($manualOverheadCosts as $overhead) {
                 $finalAmount = $overhead['final_amount'] ?? 0;
                 $allocationMethod = $overhead['allocation_method'] ?? 'per_batch';
+                $displayAmount = $overhead['custom_amount'] ?? $overhead['default_amount'] ?? 0;
+
+                // Untuk metode persentase, gunakan nilai yang tepat untuk ditampilkan
+                if ($allocationMethod === 'percentage') {
+                    // Jika amount adalah 0, gunakan estimated_uses sebagai persentase
+                    $displayAmount = $displayAmount > 0 ? $displayAmount : ($overhead['estimated_uses'] ?? 0);
+                }
+
 
                 // Hitung cost per batch dan per unit berdasarkan allocation method
                 if ($allocationMethod === 'per_unit') {
                     // Untuk per_unit: final_amount = cost per unit, jadi cost per batch = final_amount * production_yield
                     $costPerUnit = $finalAmount;
                     $costPerBatch = $finalAmount * $productionYield;
+                } elseif ($allocationMethod === 'percentage') {
+                    // Untuk percentage: final_amount adalah persentase dari harga jual (seharusnya belum ada di sini, tapi kita hitung berdasarkan default/custom amount)
+                    // Jika `amount` (dari overhead_costs atau custom_amount) adalah persentase
+                    $percentage = $displayAmount; // Gunakan displayAmount yang sudah disesuaikan
+                    $costPerBatch = ($selectedProduct['sale_price'] ?? 0) * ($percentage / 100);
+                    $costPerUnit = $productionYield > 0 ? $costPerBatch / $productionYield : 0;
                 } else {
-                    // Untuk per_batch, percentage, per_hour: final_amount = cost per batch
+                    // Untuk per_batch, per_hour: final_amount = cost per batch
                     $costPerBatch = $finalAmount;
                     $costPerUnit = $productionYield > 0 ? $finalAmount / $productionYield : 0;
                 }
@@ -226,9 +242,9 @@ try {
                 $overheadDetails[] = [
                     'name' => $overhead['name'],
                     'type' => 'overhead',
-                    'amount' => $overhead['custom_amount'] ?? $overhead['default_amount'],
+                    'amount' => $displayAmount,
                     'allocation_method' => $overhead['allocation_method'],
-                    'description' => $overhead['description'],
+                    'description' => $overhead['description'] ?? '',
                     'cost_per_batch' => $costPerBatch,
                     'cost_per_unit' => $costPerUnit,
                     'category' => 'overhead',
@@ -555,7 +571,7 @@ try {
                                     <div class="flex items-center">
                                         <div class="p-2 bg-indigo-100 rounded-lg mr-3">
                                             <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 14h.01M9 11h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                                             </svg>
                                         </div>
                                         <div>
@@ -759,16 +775,23 @@ try {
                                                         <span class="text-sm text-gray-600">
                                                             <?php 
                                                             // Tampilkan perhitungan detail berdasarkan allocation method
-                                                            $method = $detail['allocation_method'];
-                                                            $amount = $detail['amount'];
+                                                            $method = $detail['allocation_method'] ?? 'per_batch';
+                                                            $amount = $detail['amount'] ?? 0;
                                                             $estimatedUses = $detail['estimated_uses'] ?? 1;
-                                                            $costPerBatch = $detail['cost_per_batch'];
-                                                            $costPerUnit = $detail['cost_per_unit'];
+                                                            $costPerBatch = $detail['cost_per_batch'] ?? 0;
+                                                            $costPerUnit = $detail['cost_per_unit'] ?? 0;
+
+                                                            // Untuk metode persentase, pastikan menggunakan nilai yang benar
+                                                            if ($method === 'percentage' && $amount <= 0) {
+                                                                $amount = $estimatedUses; // fallback ke estimated_uses jika amount kosong
+                                                            }
 
                                                             switch ($method) {
                                                                 case 'percentage':
-                                                                    echo "Persentase: " . number_format($amount, 1) . "%";
-                                                                    echo "<br><span class='text-xs text-gray-500'>dari harga jual produk</span>";
+                                                                    // Prioritas: amount jika diisi, jika tidak pakai estimated_uses
+                                                                    $displayPercentage = ($amount > 0) ? $amount : $estimatedUses;
+                                                                    echo "Persentase: " . number_format($displayPercentage, 1) . "%";
+                                                                    echo "<br><span class='text-xs text-gray-500'>dari harga jual produk (Rp " . number_format($selectedProduct['sale_price'] ?? 0, 0, ',', '.') . ")</span>";
                                                                     break;
                                                                 case 'per_unit':
                                                                     echo "Rp " . number_format($amount, 0, ',', '.') . " ÷ " . number_format($estimatedUses, 0, ',', '.') . " unit";

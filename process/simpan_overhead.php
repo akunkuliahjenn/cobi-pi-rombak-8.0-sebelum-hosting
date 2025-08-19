@@ -62,10 +62,18 @@ try {
             }
 
             // Validasi khusus berdasarkan metode alokasi
-            if ($allocation_method === 'percentage' && $amount > 100) {
-                $_SESSION['overhead_message'] = ['text' => 'Untuk metode persentase, nilai tidak boleh lebih dari 100%.', 'type' => 'error'];
-                header("Location: /cornerbites-sia/pages/overhead_management.php");
-                exit();
+            if ($allocation_method === 'percentage') {
+                // Untuk metode persentase, validasi estimated_uses sebagai persentase
+                if ($estimated_uses > 100) {
+                    $_SESSION['overhead_message'] = ['text' => 'Untuk metode persentase, nilai persentase tidak boleh lebih dari 100%.', 'type' => 'error'];
+                    header("Location: /cornerbites-sia/pages/overhead_management.php");
+                    exit();
+                }
+                
+                // Untuk metode persentase, set amount ke 0 jika kosong, karena kita menggunakan estimated_uses sebagai persentase
+                if ($amount <= 0) {
+                    $amount = 0;
+                }
             }
 
             // Validasi metode alokasi

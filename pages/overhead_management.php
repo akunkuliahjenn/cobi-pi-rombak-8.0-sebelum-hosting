@@ -179,7 +179,16 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'overhead') {
                             </td>
                             <td class="px-4 py-3">
                                 <div class="text-sm text-gray-600">
-                                    <?php echo ($overhead['estimated_uses'] ?? 1); ?>x
+                                    <?php 
+                                    $allocation_method = $overhead['allocation_method'] ?? 'per_batch';
+                                    if ($allocation_method === 'percentage') {
+                                        // Untuk metode persentase, prioritas tampilkan amount, jika kosong baru estimated_uses
+                                        $percentage_value = ($overhead['amount'] > 0) ? $overhead['amount'] : ($overhead['estimated_uses'] ?? 0);
+                                        echo number_format($percentage_value, 0) . '%';
+                                    } else {
+                                        echo ($overhead['estimated_uses'] ?? 1) . 'x';
+                                    }
+                                    ?>
                                 </div>
                             </td>
                             <td class="px-4 py-3">
